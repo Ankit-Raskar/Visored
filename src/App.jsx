@@ -648,6 +648,13 @@ function AdminDashboard({ onLogout }) {
 // ═════════════════════════════════════════════════════════════════════════════
 // STUDENT DASHBOARD
 // ═════════════════════════════════════════════════════════════════════════════
+const STAGES = [
+  { id: "docs", label: "Documents", emoji: "📄", pct: 77, v: "amber" },
+  { id: "fees", label: "Fee Payment", emoji: "💳", pct: 100, v: "green" },
+  { id: "courses", label: "Courses", emoji: "📚", pct: 73, v: "amber" },
+  { id: "mentor", label: "Mentor", emoji: "👩‍🏫", pct: 50, v: "blue" },
+  { id: "compliance", label: "Compliance", emoji: "🎯", pct: 40, v: "neutral" },
+];
 function StudentDashboard({ onLogout }) {
   const [page,setPage]           = useState("dashboard");
   const [docs,setDocs]           = useState(INITIAL_DOCS);
@@ -683,31 +690,40 @@ function StudentDashboard({ onLogout }) {
     sendChat(null,"I just confirmed my course registration with "+elective.name+". What should I do next?");
   };
 
-  const sendChat=useCallback(async(e,prefill)=>{
-    if(e)e.preventDefault();
-    const text=prefill||inputVal.trim();
-    if(!text||aiLoading)return;
-    setInput("");
-    const newMsgs=[...messages,{role:"user",content:text}];
-    setMessages(newMsgs);setAiLoad(true);
-    if(!chatOpen)setChatOpen(true);
-    try{
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-5-20250929",max_tokens:1000,system:SYSTEM_PROMPT,messages:newMsgs.map(m=>({role:m.role,content:m.content}))})});
-      const data=await res.json();
-      setMessages(p=>[...p,{role:"assistant",content:data.content?.[0]?.text||"Something went wrong. Please try again."}]);
-    }catch{setMessages(p=>[...p,{role:"assistant",content:"I couldn't connect right now. Please try again."}]);}
+ const sendChat = useCallback(async (e, prefill) => {
+  if (e) e.preventDefault();
+  const text = prefill || inputVal.trim();
+  if (!text || aiLoading) return;
+
+  setInput("");
+  const newMsgs = [...messages, { role: "user", content: text }];
+  setMessages(newMsgs);
+  setAiLoad(true);
+  if (!chatOpen) setChatOpen(true);
+
+  // MOCK AI RESPONSE (Replaces the broken fetch call)
+  setTimeout(() => {
+    let response = "I'm looking into that for you, Arjun. Is there anything specific about the deadlines you need help with?";
+    
+    // Simple keyword triggers for the demo
+    if (text.toLowerCase().includes("doc")) response = "You still need to upload your Transfer Certificate. The deadline is Feb 20!";
+    if (text.toLowerCase().includes("course")) response = "You have 14/19 credits. I recommend 'Digital Logic Design' to finish your registration.";
+
+    setMessages(prev => [...prev, { role: "assistant", content: response }]);
     setAiLoad(false);
-  },[inputVal,messages,aiLoading,chatOpen]);
+  }, 1000);
+}, [inputVal, aiLoading, messages, chatOpen]);
+  }[inputVal,messages,aiLoading,chatOpen];
 
   const quickAsk=q=>{setInput(q);setTimeout(()=>sendChat(null,q),60);};
   const md=text=><span dangerouslySetInnerHTML={{__html:text.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br/>")}}/>;
 
-  const STAGES=[
-    {id:"docs",   emoji:"📄",label:"Document Verification",  sub:`${verifiedCount}/9 verified`,       pct:Math.round(verifiedCount/9*100), v:verifiedCount<9?"amber":"green"},
-    {id:"fee",    emoji:"💳",label:"Fee Payment",            sub:"₹1,88,500 paid · Complete",          pct:100,                             v:"green"},
-    {id:"courses",emoji:"📚",label:"Course Registration",    sub:confirmed?"19/19 credits done":`${credits}/19 credits · pick elective`, pct:Math.round(credits/19*100), v:confirmed?"green":"amber"},
-    {id:"mentor", emoji:"🎯",label:"Mentoring & Compliance", sub:`${compDone}/5 modules complete`,    pct:Math.round(compDone/5*100),       v:compDone===5?"green":"blue"},
-  ];
+  // const STAGES=[
+  //   {id:"docs",   emoji:"📄",label:"Document Verification",  sub:`${verifiedCount}/9 verified`,       pct:Math.round(verifiedCount/9*100), v:verifiedCount<9?"amber":"green"},
+  //   {id:"fee",    emoji:"💳",label:"Fee Payment",            sub:"₹1,88,500 paid · Complete",          pct:100,                             v:"green"},
+  //   {id:"courses",emoji:"📚",label:"Course Registration",    sub:confirmed?"19/19 credits done":`${credits}/19 credits · pick elective`, pct:Math.round(credits/19*100), v:confirmed?"green":"amber"},
+  //   {id:"mentor", emoji:"🎯",label:"Mentoring & Compliance", sub:`${compDone}/5 modules complete`,    pct:Math.round(compDone/5*100),       v:compDone===5?"green":"blue"},
+  // ];
 
   return (
     <div style={{fontFamily:"'Sora',system-ui,sans-serif",background:"#f9fafb",minHeight:"100vh",color:"#111827"}}>
@@ -1120,13 +1136,25 @@ function StudentDashboard({ onLogout }) {
       </div>
     </div>
   );
-}
+
 
 // ═════════════════════════════════════════════════════════════════════════════
 // ROOT
 // ═════════════════════════════════════════════════════════════════════════════
 export default function App() {
-  const [session, setSession] = useState(null); // null | "student" | "admin"
+  const [user, setUser] = useState(null); // stores 'student' or 'admin'
+
+  if (!user) {
+    return <LoginScreen onLogin={(role) => setUser(role)} />;
+  }
+
+  return user === "admin" ? (
+    <AdminDashboard onLogout={() => setUser(null)} />
+  ) : (
+    <StudentDashboard onLogout={() => setUser(null)} />
+  );
+}
+
 
   return (
     <>
@@ -1179,4 +1207,3 @@ export default function App() {
       {session === "student" && <StudentDashboard onLogout={() => setSession(null)} />}
     </>
   );
-}
