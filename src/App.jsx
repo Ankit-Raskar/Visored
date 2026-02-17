@@ -713,6 +713,127 @@ function StudentDashboard({ onLogout }) {
     sendChat(null,"I just confirmed my course registration with "+elective.name+". What should I do next?");
   };
 
+  const getMockReply = (text) => {
+    const q = text.toLowerCase();
+    const nl = "\n";
+
+    if (q.includes("document") || q.includes("doc") || q.includes("pending") || q.includes("upload") || q.includes("certificate")) {
+      const missing = docs.filter(d=>d.status==="missing");
+      if (missing.length === 0) return "Great news, Arjun! All your documents have been verified. No pending uploads — you are all set on the docs front!";
+      return "Arjun, you have **" + missing.length + " document(s)** still pending:" + nl + nl +
+        missing.map(d=>"• **" + d.name + "** — " + d.sub).join(nl) + nl + nl +
+        "The deadline is **Feb 20, 2026** — just a few days away! Head to the Document Verification section and click Upload next to each missing document. Late submissions may delay your Student ID card.";
+    }
+    if (q.includes("elective") || q.includes("course") || q.includes("register") || q.includes("credit") || q.includes("ec10")) {
+      if (confirmed) return "You are all set, Arjun! Your course registration is complete with **19/19 credits** locked in. Your elective has been confirmed and a confirmation was sent to your institute email.";
+      return "For ECE students, I'd recommend **EC102 – Digital Logic Design** (5 credits). Here's why:" + nl + nl +
+        "• Strong foundation for your core ECE subjects" + nl +
+        "• Excellent placement relevance (VLSI, embedded systems)" + nl +
+        "• Prof has good ratings from previous batches" + nl + nl +
+        "Registration closes **Feb 23** — only 6 days left! You currently have 14/19 credits. Select your elective in the Course Registration section and hit Confirm.";
+    }
+    if (q.includes("orientation") || q.includes("orient") || q.includes("feb 28") || q.includes("auditorium")) {
+      return "Orientation Day is on **Feb 28, 2026 at 9:00 AM** at the **Main Auditorium**, Arjun." + nl + nl +
+        "What to expect:" + nl +
+        "• Welcome address by the Vice Chancellor" + nl +
+        "• Department-wise breakout sessions" + nl +
+        "• Library and LMS demo" + nl +
+        "• Meet your faculty mentors" + nl + nl +
+        "Please carry your provisional admission letter and a photo ID. Dress code is formal.";
+    }
+    if (q.includes("lms") || q.includes("portal") || q.includes("activate") || q.includes("email") || q.includes("account")) {
+      return "To activate your LMS access, Arjun:" + nl + nl +
+        "1. Go to **lms.srmist.edu.in**" + nl +
+        "2. Click First-time Login" + nl +
+        "3. Use your roll number **24ECE047** as username" + nl +
+        "4. Use your institute email password" + nl + nl +
+        "If you face issues, contact: **helpdesk@srm.edu.in** or call Ext. **1800** (Mon–Sat, 9AM–6PM).";
+    }
+    if (q.includes("mentor") || q.includes("priya") || q.includes("meeting") || q.includes("feb 25")) {
+      return "Your assigned mentor is **Dr. Priya Menon**, Asst. Professor, ECE Dept (PhD, IIT Madras)." + nl + nl +
+        "First meeting: **Feb 25, 2026 at 10:00 AM**" + nl +
+        "Location: ECE Block, Room 312" + nl + nl +
+        "For your first meeting, prepare:" + nl +
+        "• Your academic goals and areas of interest" + nl +
+        "• Questions about research opportunities" + nl +
+        "• Any concerns about your course load" + nl + nl +
+        "You can reach her at **priya.m@srm.edu.in** if you need to reschedule.";
+    }
+    if (q.includes("fee") || q.includes("payment") || q.includes("paid") || q.includes("receipt") || q.includes("money")) {
+      return "Your fee payment is **fully cleared**, Arjun!" + nl + nl +
+        "Payment summary:" + nl +
+        "• Tuition Fee: Rs. 1,20,000" + nl +
+        "• Hostel Fee: Rs. 48,000" + nl +
+        "• Mess Deposit: Rs. 12,000" + nl +
+        "• Lab and Library: Rs. 8,500" + nl + nl +
+        "**Total: Rs. 1,88,500** · Ref: TXN-2024-47891" + nl + nl +
+        "You can download your official receipt from the Fee Payment section. No further action needed!";
+    }
+    if (q.includes("compliance") || q.includes("module") || q.includes("anti-ragging") || q.includes("policy") || q.includes("conduct")) {
+      const done = compliance.filter(c=>c.done).length;
+      const pending = compliance.filter(c=>!c.done);
+      return "You have completed **" + done + "/5** compliance modules, Arjun." + nl + nl +
+        "Remaining modules:" + nl +
+        pending.map(c=>"• **" + c.label + "** — Due " + c.due).join(nl) + nl + nl +
+        "To complete them:" + nl +
+        "1. Go to the Mentoring and Compliance section" + nl +
+        "2. Click each module to mark it complete" + nl + nl +
+        "All modules must be done before **Mar 1** to receive your final admission clearance.";
+    }
+    if (q.includes("hostel") || q.includes("room") || q.includes("block") || q.includes("mess")) {
+      return "Your hostel room has been allotted, Arjun!" + nl + nl +
+        "• **Block A, Room 214**" + nl +
+        "• Check-in is open — bring your allotment letter" + nl +
+        "• Mess timings: Breakfast 7–9AM · Lunch 12–2PM · Dinner 7–9PM" + nl + nl +
+        "For hostel queries: **hostel@srm.edu.in**" + nl +
+        "For mess issues, speak to the mess manager directly.";
+    }
+    if (q.includes("class") || q.includes("start") || q.includes("march 3") || q.includes("mar 3") || q.includes("begin")) {
+      return "Classes officially begin on **March 3, 2026**, Arjun!" + nl + nl +
+        "Before then, make sure you have:" + nl +
+        "• Uploaded all documents (deadline: Feb 20)" + nl +
+        "• Completed course registration (deadline: Feb 23)" + nl +
+        "• Attended orientation (Feb 28)" + nl +
+        "• Completed compliance modules (by Mar 1)" + nl + nl +
+        "Your timetable will be available on the LMS portal by Feb 27. You are almost there!";
+    }
+    if (q.includes("hello") || q.includes("hi") || q.includes("hey") || q.includes("help") || q.includes("what can")) {
+      const pct = Math.round((docs.filter(d=>d.status==="verified").length/9)*25+25+(credits/19)*25+(compliance.filter(c=>c.done).length/5)*25);
+      return "Hello Arjun! I am **EduBot**, your personal onboarding assistant for Visored." + nl + nl +
+        "You are currently **" + pct + "% through** your onboarding. I can help with:" + nl + nl +
+        "• **Documents** — check pending uploads" + nl +
+        "• **Courses** — elective guidance and registration" + nl +
+        "• **Compliance** — module completion steps" + nl +
+        "• **Deadlines** — key dates and reminders" + nl +
+        "• **Hostel and Mess** — room and facilities info" + nl +
+        "• **LMS and Portal** — account activation help" + nl + nl +
+        "Just ask me anything!";
+    }
+    if (q.includes("important") || q.includes("priority") || q.includes("right now") || q.includes("urgent") || q.includes("first")) {
+      const missingDocs = docs.filter(d=>d.status==="missing").length;
+      if (missingDocs > 0) return "Your most urgent task right now, Arjun, is uploading your **" + missingDocs + " missing document(s)** — the deadline is **Feb 20** which is only 3 days away!" + nl + nl +
+        "After that, complete your **course registration** by Feb 23 if you have not picked your elective yet." + nl + nl +
+        "Go to the Document Verification card and click Upload next to the missing items. It only takes a few minutes!";
+      if (!confirmed) return "Your next priority is **course registration** — pick your elective and confirm by **Feb 23**, Arjun. You are at 14/19 credits. I recommend EC102 Digital Logic Design!" + nl + nl +
+        "After that, focus on your **compliance modules** (" + (5-compliance.filter(c=>c.done).length) + " remaining, due Mar 1).";
+      return "You are in great shape, Arjun! Your main focus now should be the **compliance modules** (" + (5-compliance.filter(c=>c.done).length) + " remaining, due Mar 1) and attending **Orientation on Feb 28**. Classes begin March 3 — you are almost ready!";
+    }
+    if (q.includes("registrar") || q.includes("contact") || q.includes("support") || q.includes("helpdesk") || q.includes("phone")) {
+      return "Key contacts at SRM, Arjun:" + nl + nl +
+        "• **Helpdesk:** helpdesk@srm.edu.in · Ext. 1800" + nl +
+        "• **Registrar:** registrar@srm.edu.in" + nl +
+        "• **Hostel Office:** hostel@srm.edu.in" + nl +
+        "• **Mentor:** priya.m@srm.edu.in" + nl + nl +
+        "Office hours: Mon–Sat, 9AM–5PM. For urgent issues, email the helpdesk — they respond within 24 hours.";
+    }
+    const defaults = [
+      "I can help you with that, Arjun! Could you be more specific? For example, are you asking about your pending documents, course registration, mentor meeting, compliance modules, or classes starting March 3? Just rephrase and I will give you a detailed answer!",
+      "Good question, Arjun! Here is what I know is most urgent for you right now: Feb 20 — Upload remaining documents, Feb 23 — Complete course registration, Feb 28 — Orientation Day at 9AM, Mar 3 — Classes begin. Ask me about any of these!",
+      "I am here to help, Arjun! I have detailed info on your documents, courses, fees, hostel, mentor, compliance modules, and key deadlines. Try asking: What documents are still pending? or Which elective should I pick? or When does orientation start?"
+    ];
+    return defaults[text.length % 3];
+  };
+
   const sendChat=useCallback(async(e,prefill)=>{
     if(e)e.preventDefault();
     const text=prefill||inputVal.trim();
@@ -721,13 +842,12 @@ function StudentDashboard({ onLogout }) {
     const newMsgs=[...messages,{role:"user",content:text}];
     setMessages(newMsgs);setAiLoad(true);
     if(!chatOpen)setChatOpen(true);
-    try{
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-5-20250929",max_tokens:1000,system:SYSTEM_PROMPT,messages:newMsgs.map(m=>({role:m.role,content:m.content}))})});
-      const data=await res.json();
-      setMessages(p=>[...p,{role:"assistant",content:data.content?.[0]?.text||"Something went wrong. Please try again."}]);
-    }catch{setMessages(p=>[...p,{role:"assistant",content:"I couldn't connect right now. Please try again."}]);}
+    // Simulate typing delay (600–1200ms)
+    await new Promise(r=>setTimeout(r,600+Math.random()*600));
+    const reply = getMockReply(text);
+    setMessages(p=>[...p,{role:"assistant",content:reply}]);
     setAiLoad(false);
-  },[inputVal,messages,aiLoading,chatOpen]);
+  },[inputVal,messages,aiLoading,chatOpen,docs,compliance,confirmed,credits]);
 
   const quickAsk=q=>{setInput(q);setTimeout(()=>sendChat(null,q),60);};
   const md=text=><span dangerouslySetInnerHTML={{__html:text.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br/>")}}/>;
