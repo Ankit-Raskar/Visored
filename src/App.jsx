@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 // ─── CREDENTIALS ─────────────────────────────────────────────────────────────
 const USERS = {
@@ -67,7 +67,7 @@ function Badge({children,v="neutral"}) {
 
 function Toast({msg,type}) {
   const C={error:["#fef2f2","#dc2626"],info:["#eff6ff","#2563eb"],success:["#f0fdf4","#16a34a"]}[type||"success"];
-  return <div className="toast-anim" style={{position:"fixed",top:18,right:18,zIndex:9999,background:C[0],border:`1.5px solid ${C[1]}44`,color:C[1],padding:"11px 18px",borderRadius:12,fontSize:13,fontWeight:600,boxShadow:"0 8px 32px rgba(0,0,0,0.12)",display:"flex",alignItems:"center",gap:8}}>{type==="error"?"✕":type==="info"?"ℹ":"✓"} {msg}</div>;
+  return <div style={{position:"fixed",top:18,right:18,zIndex:9999,background:C[0],border:`1.5px solid ${C[1]}44`,color:C[1],padding:"11px 18px",borderRadius:12,fontSize:13,fontWeight:600,boxShadow:"0 8px 32px rgba(0,0,0,0.12)",display:"flex",alignItems:"center",gap:8,animation:"toastIn .25s ease"}}>{type==="error"?"✕":type==="info"?"ℹ":"✓"} {msg}</div>;
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -102,11 +102,9 @@ function LoginScreen({ onLogin }) {
   const fillHint = () => { setId(hints[tab].id); setPass(hints[tab].pass); };
 
   return (
-    <div className="login-grid" style={{minHeight:"100vh", fontFamily:"'Sora',system-ui,sans-serif"}}>
+    <div className="login-grid" style={{fontFamily:"'Sora',system-ui,sans-serif"}}>
       {/* Left Panel */}
-      <div className="login-left-panel" style={{background:"linear-gradient(160deg,#0f1a0f 0%,#0a2e1a 50%,#082215 100%)",
-        display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"32px 28px",
-        position:"relative",overflow:"hidden"}}>
+      <div className="login-left" style={{background:"linear-gradient(160deg,#0f1a0f 0%,#0a2e1a 50%,#082215 100%)"}}>
         <div style={{position:"absolute",inset:0,backgroundImage:"radial-gradient(circle at 20% 80%,rgba(22,163,74,0.12) 0%,transparent 60%),radial-gradient(circle at 80% 20%,rgba(22,163,74,0.08) 0%,transparent 50%)",pointerEvents:"none"}}/>
         <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px)",backgroundSize:"40px 40px",pointerEvents:"none"}}/>
 
@@ -141,7 +139,7 @@ function LoginScreen({ onLogin }) {
       </div>
 
       {/* Right Panel */}
-      <div style={{background:"#f9fafb",display:"flex",alignItems:"center",justifyContent:"center",padding:"48px 32px"}}>
+      <div className="login-right">
         <div style={{width:"100%",maxWidth:400,animation:"fadeUp .5s ease"}}>
 
           <h2 style={{fontFamily:"'Fraunces',serif",fontSize:28,fontWeight:700,color:"#111827",marginBottom:6,letterSpacing:"-0.02em"}}>
@@ -232,8 +230,62 @@ function LoginScreen({ onLogin }) {
               ✦ Auto-fill credentials
             </button>
           </div>
+
         </div>
       </div>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900&family=Sora:wght@300;400;500;600;700;800&display=swap');@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}@keyframes toastIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}*{box-sizing:border-box;}input,button{outline:none;}
+.login-grid{display:grid;grid-template-columns:1fr 1fr;min-height:100vh;}
+.login-left{display:flex;flex-direction:column;justify-content:space-between;padding:48px 52px;position:relative;overflow:hidden;}
+.login-right{background:#f9fafb;display:flex;align-items:center;justify-content:center;padding:48px 52px;}
+.stat-grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:28px;}
+.stat-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.two-col-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.two-col-gap16{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.detail-grid{display:grid;grid-template-columns:280px 1fr;gap:20px;}
+.student-layout{display:grid;grid-template-columns:264px 1fr;min-height:calc(100vh - 58px);}
+.student-sidebar{background:#fff;border-right:1.5px solid #f3f4f6;padding:22px 0;position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto;}
+.chat-widget-box{position:absolute;bottom:66px;right:0;width:368px;background:#fff;border:1.5px solid #f3f4f6;border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,0.12);display:flex;flex-direction:column;max-height:540px;overflow:hidden;}
+.topbar-nav-admin{display:flex;gap:2px;}
+.topbar-nav-student{display:flex;gap:2px;}
+.topbar-right-admin{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.topbar-right-student{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.admin-user-label{font-size:12px;color:rgba(255,255,255,0.5);}
+.mobile-hamburger{display:none;background:none;border:none;cursor:pointer;font-size:22px;padding:4px;}
+.mobile-bottom-nav{display:none;}
+@media(max-width:900px){
+  .stat-grid-5{grid-template-columns:repeat(3,1fr);}
+  .two-col-grid{grid-template-columns:1fr;}
+  .two-col-gap16{grid-template-columns:1fr;}
+  .detail-grid{grid-template-columns:1fr;}
+}
+@media(max-width:768px){
+  .main-pad{padding:16px!important;}
+  .login-grid{grid-template-columns:1fr;}
+  .login-left{display:none;}
+  .login-right{padding:32px 20px;min-height:100vh;}
+  .stat-grid-5{grid-template-columns:repeat(2,1fr);}
+  .stat-grid-4{grid-template-columns:repeat(2,1fr);}
+  .two-col-grid{grid-template-columns:1fr;}
+  .two-col-gap16{grid-template-columns:1fr;}
+  .detail-grid{grid-template-columns:1fr;}
+  .student-layout{grid-template-columns:1fr;}
+  .student-sidebar{display:none;}
+  .chat-widget-box{width:calc(100vw - 48px);right:-8px;max-height:70vh;}
+  .topbar-nav-admin,.topbar-nav-student{display:none;}
+  .topbar-right-admin{gap:6px;}
+  .topbar-right-student{gap:6px;}
+  .admin-user-label{display:none;}
+  .hide-on-mobile{display:none!important;}
+  .mobile-hamburger{display:flex;align-items:center;justify-content:center;}
+  .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1.5px solid #f3f4f6;z-index:200;padding:0;}
+  .main-pad{padding:16px!important;}
+  table{font-size:12px;}
+  table th,table td{padding:8px 10px!important;}
+}
+@media(max-width:480px){
+  .stat-grid-5{grid-template-columns:repeat(2,1fr);}
+  .stat-grid-4{grid-template-columns:repeat(2,1fr);}
+}`}</style>
     </div>
   );
 }
@@ -243,6 +295,7 @@ function LoginScreen({ onLogin }) {
 // ═════════════════════════════════════════════════════════════════════════════
 function AdminDashboard({ onLogout }) {
   const [page, setPage]       = useState("overview");
+  const [mobileNav, setMobileNav] = useState(false);
   const [search, setSearch]   = useState("");
   const [selected, setSel]    = useState(null);
   const [filter, setFilter]   = useState("all");
@@ -278,25 +331,26 @@ function AdminDashboard({ onLogout }) {
       {toast && <Toast msg={toast.msg} type={toast.type}/>}
 
       {/* Admin Topbar */}
-      <header className="app-header" style={{background:"#111827"}}>
+      <header style={{background:"#111827",padding:"0 24px",position:"sticky",top:0,zIndex:100,display:"flex",flexWrap:"wrap",alignItems:"center",gap:0,minHeight:58}}>
         <div style={{display:"flex",alignItems:"center",gap:10,marginRight:32}}>
           <div style={{width:30,height:30,background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🎓</div>
-          <span className="hide-mobile" style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:"#fff",letterSpacing:"-0.03em"}}>Visored</span>
-          <span className="hide-mobile" style={{fontSize:11,fontWeight:600,background:"rgba(22,163,74,0.25)",color:"#4ade80",padding:"3px 10px",borderRadius:20,marginLeft:4,letterSpacing:"0.04em"}}>ADMIN</span>
+          <span style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:"#fff",letterSpacing:"-0.03em"}}>Visored</span>
+          <span style={{fontSize:11,fontWeight:600,background:"rgba(22,163,74,0.25)",color:"#4ade80",padding:"3px 10px",borderRadius:20,marginLeft:4,letterSpacing:"0.04em"}}>ADMIN</span>
         </div>
-        <nav style={{display:"flex",gap:2, overflowX:"auto", flex:1}}>
+        <nav className="topbar-nav-admin" style={{}}>
           {[["overview","Overview"],["students","Students"],["analytics","Analytics"]].map(([id,label])=>(
             <button key={id} onClick={()=>{setPage(id);setSel(null);}}
               style={{padding:"6px 14px",borderRadius:8,border:"none",cursor:"pointer",
                 fontFamily:"inherit",fontSize:13,fontWeight:page===id?600:400,
                 background:page===id?"rgba(255,255,255,0.12)":"transparent",
-                color:page===id?"#fff":"rgba(255,255,255,0.5)",transition:"all .15s", whiteSpace:"nowrap"}}>
+                color:page===id?"#fff":"rgba(255,255,255,0.5)",transition:"all .15s"}}>
               {label}
             </button>
           ))}
         </nav>
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <div className="hide-mobile" style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>Dr. Admin · Registrar</div>
+        <button className="mobile-hamburger" onClick={()=>setMobileNav(!mobileNav)} style={{marginLeft:"auto",color:"#fff"}}>☰</button>
+        <div style={{marginLeft:0,display:"flex",alignItems:"center",gap:12}}>
+          <span className="admin-user-label">Dr. Admin · Registrar's Office</span>
           <button onClick={onLogout}
             style={{padding:"7px 16px",borderRadius:9,border:"1.5px solid rgba(255,255,255,0.2)",
               background:"transparent",color:"rgba(255,255,255,0.7)",fontSize:12,fontWeight:600,
@@ -308,7 +362,19 @@ function AdminDashboard({ onLogout }) {
         </div>
       </header>
 
-      <div style={{padding:"28px 24px",maxWidth:1200,margin:"0 auto"}}>
+      {/* Mobile Nav Drawer */}
+      {mobileNav && (
+        <div style={{background:"#1f2937",padding:"8px 16px 16px",position:"sticky",top:58,zIndex:99}}>
+          {[["overview","Overview"],["students","Students"],["analytics","Analytics"]].map(([id,label])=>(
+            <button key={id} onClick={()=>{setPage(id);setSel(null);setMobileNav(false);}}
+              style={{display:"block",width:"100%",padding:"10px 14px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:page===id?600:400,background:page===id?"rgba(255,255,255,0.12)":"transparent",color:page===id?"#fff":"rgba(255,255,255,0.6)",textAlign:"left",marginBottom:4}}>
+              {label}
+            </button>
+          ))}
+          <button onClick={onLogout} style={{display:"block",width:"100%",padding:"10px 14px",borderRadius:8,border:"1.5px solid rgba(255,255,255,0.2)",cursor:"pointer",fontFamily:"inherit",fontSize:14,background:"transparent",color:"rgba(255,255,255,0.7)",textAlign:"left",marginTop:8}}>Sign out</button>
+        </div>
+      )}
+      <div style={{padding:"28px 32px",maxWidth:1200,margin:"0 auto"}} style={{padding:"28px 32px",maxWidth:1200,margin:"0 auto",paddingBottom:24}}>
 
         {/* OVERVIEW */}
         {page==="overview" && <>
@@ -317,7 +383,7 @@ function AdminDashboard({ onLogout }) {
             <p style={{fontSize:13.5,color:"#6b7280"}}>Batch 2024–28 onboarding status · {new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"})}</p>
           </div>
           {/* Stat cards */}
-          <div className="grid-5" style={{marginBottom:28}}>
+          <div className="stat-grid-5">
             {[
               ["👥",stats.total,"Total Students","#f0fdf4","#16a34a"],
               ["✅",stats.complete,"Fully Onboarded","#f0fdf4","#16a34a"],
@@ -354,7 +420,7 @@ function AdminDashboard({ onLogout }) {
           </div>
 
           {/* Stage breakdown */}
-          <div className="grid-2">
+          <div className="two-col-gap16">
             {[
               {label:"Document Verification",icon:"📄",done:STUDENTS_DB.filter(s=>s.docs===9).length,total:stats.total},
               {label:"Fee Payment",icon:"💳",done:STUDENTS_DB.filter(s=>s.fees).length,total:stats.total},
@@ -383,27 +449,27 @@ function AdminDashboard({ onLogout }) {
 
         {/* STUDENTS TABLE */}
         {page==="students" && !selected && <>
-          <div className="flex-col-mobile" style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20, gap:12}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
             <div>
               <h2 style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,letterSpacing:"-0.02em",marginBottom:4}}>Student Management</h2>
               <p style={{fontSize:13,color:"#6b7280"}}>{filtered.length} students · Click a row to view details</p>
             </div>
             <button onClick={()=>showToast("Report exported as CSV!","info")}
               style={{padding:"9px 18px",borderRadius:10,border:"1.5px solid #e5e7eb",background:"#fff",
-                color:"#374151",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit", whiteSpace:"nowrap"}}>
+                color:"#374151",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
               📥 Export CSV
             </button>
           </div>
 
           {/* Search + Filter */}
-          <div className="flex-col-mobile" style={{display:"flex",gap:10,marginBottom:16}}>
+          <div style={{display:"flex",gap:10,marginBottom:16}}>
             <input value={search} onChange={e=>setSearch(e.target.value)}
               placeholder="Search by name, roll no, or branch…"
               style={{flex:1,padding:"10px 14px",border:"1.5px solid #e5e7eb",borderRadius:10,fontSize:13,
                 fontFamily:"inherit",color:"#111827",background:"#fff"}}
               onFocus={e=>e.target.style.borderColor="#86efac"}
               onBlur={e=>e.target.style.borderColor="#e5e7eb"}/>
-            <div style={{display:"flex",gap:6, flexWrap:"wrap"}}>
+            <div style={{display:"flex",gap:6}}>
               {[["all","All"],["inprogress","In Progress"],["pending","Below 50%"],["complete","Complete"]].map(([v,l])=>(
                 <button key={v} onClick={()=>setFilter(v)}
                   style={{padding:"8px 14px",borderRadius:9,border:`1.5px solid ${filter===v?"#16a34a":"#e5e7eb"}`,
@@ -416,7 +482,7 @@ function AdminDashboard({ onLogout }) {
           </div>
 
           {/* Table */}
-          <div className="table-responsive" style={{background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:14}}>
+          <div style={{background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:14,overflow:"hidden",overflowX:"auto"}}>
             <table style={{width:"100%",borderCollapse:"collapse"}}>
               <thead>
                 <tr style={{background:"#f9fafb",borderBottom:"1.5px solid #f3f4f6"}}>
@@ -434,7 +500,7 @@ function AdminDashboard({ onLogout }) {
                     onMouseLeave={e=>e.currentTarget.style.background="#fff"}
                     onClick={()=>setSel(s)}>
                     <td style={{padding:"13px 16px"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:10, minWidth:160}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10}}>
                         <div style={{width:32,height:32,borderRadius:"50%",background:`hsl(${s.id*47},60%,50%)`,
                           display:"flex",alignItems:"center",justifyContent:"center",
                           fontSize:12,fontWeight:700,color:"#fff",flexShrink:0}}>
@@ -443,9 +509,9 @@ function AdminDashboard({ onLogout }) {
                         <span style={{fontSize:13.5,fontWeight:600,color:"#111827"}}>{s.name}</span>
                       </div>
                     </td>
-                    <td style={{padding:"13px 16px",fontSize:12.5,color:"#6b7280",fontWeight:500}}>{s.roll}</td>
+                    <td className="hide-on-mobile" style={{padding:"13px 16px",fontSize:12.5,color:"#6b7280",fontWeight:500}}>{s.roll}</td>
                     <td style={{padding:"13px 16px"}}><Badge v="neutral">{s.branch}</Badge></td>
-                    <td style={{padding:"13px 16px", minWidth: 120}}>
+                    <td style={{padding:"13px 16px"}}>
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
                         <div style={{width:80,height:5,background:"#f3f4f6",borderRadius:3,overflow:"hidden"}}>
                           <div style={{height:"100%",width:`${s.status}%`,background:clr(s.status),borderRadius:3}}/>
@@ -453,9 +519,9 @@ function AdminDashboard({ onLogout }) {
                         <span style={{fontSize:12,fontWeight:600,color:clr(s.status)}}>{s.status}%</span>
                       </div>
                     </td>
-                    <td style={{padding:"13px 16px", whiteSpace:"nowrap"}}><Badge v={s.docs===9?"green":"amber"}>{s.docs}/9</Badge></td>
-                    <td style={{padding:"13px 16px", whiteSpace:"nowrap"}}><Badge v={s.fees?"green":"red"}>{s.fees?"✓ Paid":"Pending"}</Badge></td>
-                    <td style={{padding:"13px 16px", whiteSpace:"nowrap"}}><Badge v={s.courses===19?"green":s.courses>0?"amber":"red"}>{s.courses}/19 cr</Badge></td>
+                    <td style={{padding:"13px 16px"}}><Badge v={s.docs===9?"green":"amber"}>{s.docs}/9</Badge></td>
+                    <td style={{padding:"13px 16px"}}><Badge v={s.fees?"green":"red"}>{s.fees?"✓ Paid":"Pending"}</Badge></td>
+                    <td style={{padding:"13px 16px"}}><Badge v={s.courses===19?"green":s.courses>0?"amber":"red"}>{s.courses}/19 cr</Badge></td>
                     <td style={{padding:"13px 16px"}} onClick={e=>e.stopPropagation()}>
                       <button onClick={()=>sendReminder(s.id)} disabled={sendingId===s.id}
                         style={{padding:"5px 12px",borderRadius:7,border:"1.5px solid #e5e7eb",
@@ -483,7 +549,7 @@ function AdminDashboard({ onLogout }) {
                 background:"#fff",color:"#374151",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
               ← Back to Students
             </button>
-            <div className="grid-profile">
+            <div className="detail-grid">
               {/* Profile card */}
               <div>
                 <div style={{background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:14,overflow:"hidden",marginBottom:14}}>
@@ -510,7 +576,7 @@ function AdminDashboard({ onLogout }) {
                   {[["Email",selected.email],["Phone",selected.phone],["Hostel",selected.hostel],["Batch",selected.batch]].map(([l,v])=>(
                     <div key={l} style={{marginBottom:10}}>
                       <div style={{fontSize:10.5,color:"#9ca3af",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:2}}>{l}</div>
-                      <div style={{fontSize:12.5,fontWeight:500,color:"#374151", wordBreak:"break-all"}}>{v}</div>
+                      <div style={{fontSize:12.5,fontWeight:500,color:"#374151"}}>{v}</div>
                     </div>
                   ))}
                   <button onClick={()=>sendReminder(selected.id)} disabled={sendingId===selected.id}
@@ -531,9 +597,9 @@ function AdminDashboard({ onLogout }) {
                   {icon:"🎯",label:"Compliance Modules",val:`${selected.compliance}/5`,pct:Math.round(selected.compliance/5*100),note:selected.compliance===5?"All modules complete":`${5-selected.compliance} module(s) remaining`},
                 ].map(s=>(
                   <div key={s.label} style={{background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:13,padding:"16px 20px"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10, flexWrap:"wrap"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
                       <span style={{fontSize:22}}>{s.icon}</span>
-                      <div style={{flex:1, minWidth: 150}}>
+                      <div style={{flex:1}}>
                         <div style={{fontSize:14,fontWeight:700,color:"#111827"}}>{s.label}</div>
                         <div style={{fontSize:12,color:"#6b7280"}}>{s.note}</div>
                       </div>
@@ -556,7 +622,7 @@ function AdminDashboard({ onLogout }) {
         {page==="analytics" && (
           <div>
             <h2 style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,letterSpacing:"-0.02em",marginBottom:20}}>Analytics</h2>
-            <div className="grid-2">
+            <div className="two-col-grid">
 
               {/* Branch breakdown */}
               <div style={{background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:14,padding:"20px 22px"}}>
@@ -591,7 +657,7 @@ function AdminDashboard({ onLogout }) {
                 ].map(([icon,label,pct])=>(
                   <div key={label} style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
                     <span style={{fontSize:18,width:24,textAlign:"center"}}>{icon}</span>
-                    <span className="hide-mobile" style={{fontSize:13,fontWeight:600,color:"#374151",width:100}}>{label}</span>
+                    <span style={{fontSize:13,fontWeight:600,color:"#374151",width:100}}>{label}</span>
                     <div style={{flex:1,height:7,background:"#f3f4f6",borderRadius:4,overflow:"hidden"}}>
                       <div style={{height:"100%",width:`${pct}%`,background:clr(pct),borderRadius:4,transition:"width 1s ease"}}/>
                     </div>
@@ -601,28 +667,28 @@ function AdminDashboard({ onLogout }) {
               </div>
 
               {/* At risk students */}
-              <div className="full-width" style={{background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:14,padding:"20px 22px"}}>
-                <div className="flex-col-mobile" style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16, gap: 12}}>
+              <div style={{background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:14,padding:"20px 22px",gridColumn:"1/-1"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
                   <div>
                     <div style={{fontSize:14,fontWeight:700,marginBottom:2}}>⚠ At-Risk Students</div>
-                    <div style={{fontSize:12,color:"#6b7280"}}>Students below 50% completion</div>
+                    <div style={{fontSize:12,color:"#6b7280"}}>Students below 50% completion needing immediate attention</div>
                   </div>
                   <button onClick={()=>{showToast(`Bulk reminder sent to ${STUDENTS_DB.filter(s=>s.status<50).length} students!`,"info");}}
                     style={{padding:"8px 16px",borderRadius:9,border:"none",background:"#dc2626",
-                      color:"#fff",fontSize:12.5,fontWeight:600,cursor:"pointer",fontFamily:"inherit", whiteSpace:"nowrap"}}>
-                    Bulk Reminder
+                      color:"#fff",fontSize:12.5,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+                    Send Bulk Reminder
                   </button>
                 </div>
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
                   {STUDENTS_DB.filter(s=>s.status<50).map(s=>(
                     <div key={s.id} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 16px",
-                      background:"#fef2f2",border:"1.5px solid #fecaca",borderRadius:10, flexWrap:"wrap"}}>
+                      background:"#fef2f2",border:"1.5px solid #fecaca",borderRadius:10}}>
                       <div style={{width:34,height:34,borderRadius:"50%",background:`hsl(${s.id*47},60%,50%)`,
                         display:"flex",alignItems:"center",justifyContent:"center",
                         fontSize:12,fontWeight:700,color:"#fff",flexShrink:0}}>
                         {s.name.split(" ").map(n=>n[0]).join("")}
                       </div>
-                      <div style={{flex:1, minWidth:160}}>
+                      <div style={{flex:1}}>
                         <div style={{fontSize:13.5,fontWeight:600,color:"#111827"}}>{s.name}</div>
                         <div style={{fontSize:11.5,color:"#6b7280"}}>{s.roll} · {s.branch} · {!s.fees?"Fees unpaid · ":""}{s.docs<9?`${9-s.docs} docs missing`:"Docs OK"}</div>
                       </div>
@@ -646,17 +712,11 @@ function AdminDashboard({ onLogout }) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// STUDENT DASHBOARD
+// STUDENT DASHBOARD (preserved from previous version)
 // ═════════════════════════════════════════════════════════════════════════════
-const STAGES = [
-  { id: "docs", label: "Documents", emoji: "📄", pct: 77, v: "amber" },
-  { id: "fees", label: "Fee Payment", emoji: "💳", pct: 100, v: "green" },
-  { id: "courses", label: "Courses", emoji: "📚", pct: 73, v: "amber" },
-  { id: "mentor", label: "Mentor", emoji: "👩‍🏫", pct: 50, v: "blue" },
-  { id: "compliance", label: "Compliance", emoji: "🎯", pct: 40, v: "neutral" },
-];
 function StudentDashboard({ onLogout }) {
   const [page,setPage]           = useState("dashboard");
+  const [mobileNav,setMobileNav] = useState(false);
   const [docs,setDocs]           = useState(INITIAL_DOCS);
   const [compliance,setComp]     = useState(COMPLIANCE_INIT);
   const [elective,setElective]   = useState(null);
@@ -690,69 +750,60 @@ function StudentDashboard({ onLogout }) {
     sendChat(null,"I just confirmed my course registration with "+elective.name+". What should I do next?");
   };
 
- const sendChat = useCallback(async (e, prefill) => {
-  if (e) e.preventDefault();
-  const text = prefill || inputVal.trim();
-  if (!text || aiLoading) return;
-
-  setInput("");
-  const newMsgs = [...messages, { role: "user", content: text }];
-  setMessages(newMsgs);
-  setAiLoad(true);
-  if (!chatOpen) setChatOpen(true);
-
-  // MOCK AI RESPONSE (Replaces the broken fetch call)
-  setTimeout(() => {
-    let response = "I'm looking into that for you, Arjun. Is there anything specific about the deadlines you need help with?";
-    
-    // Simple keyword triggers for the demo
-    if (text.toLowerCase().includes("doc")) response = "You still need to upload your Transfer Certificate. The deadline is Feb 20!";
-    if (text.toLowerCase().includes("course")) response = "You have 14/19 credits. I recommend 'Digital Logic Design' to finish your registration.";
-
-    setMessages(prev => [...prev, { role: "assistant", content: response }]);
+  const sendChat=useCallback(async(e,prefill)=>{
+    if(e)e.preventDefault();
+    const text=prefill||inputVal.trim();
+    if(!text||aiLoading)return;
+    setInput("");
+    const newMsgs=[...messages,{role:"user",content:text}];
+    setMessages(newMsgs);setAiLoad(true);
+    if(!chatOpen)setChatOpen(true);
+    try{
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-5-20250929",max_tokens:1000,system:SYSTEM_PROMPT,messages:newMsgs.map(m=>({role:m.role,content:m.content}))})});
+      const data=await res.json();
+      setMessages(p=>[...p,{role:"assistant",content:data.content?.[0]?.text||"Something went wrong. Please try again."}]);
+    }catch{setMessages(p=>[...p,{role:"assistant",content:"I couldn't connect right now. Please try again."}]);}
     setAiLoad(false);
-  }, 1000);
-}, [inputVal, aiLoading, messages, chatOpen]);
-  }[inputVal,messages,aiLoading,chatOpen];
+  },[inputVal,messages,aiLoading,chatOpen]);
 
   const quickAsk=q=>{setInput(q);setTimeout(()=>sendChat(null,q),60);};
   const md=text=><span dangerouslySetInnerHTML={{__html:text.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br/>")}}/>;
 
-  // const STAGES=[
-  //   {id:"docs",   emoji:"📄",label:"Document Verification",  sub:`${verifiedCount}/9 verified`,       pct:Math.round(verifiedCount/9*100), v:verifiedCount<9?"amber":"green"},
-  //   {id:"fee",    emoji:"💳",label:"Fee Payment",            sub:"₹1,88,500 paid · Complete",          pct:100,                             v:"green"},
-  //   {id:"courses",emoji:"📚",label:"Course Registration",    sub:confirmed?"19/19 credits done":`${credits}/19 credits · pick elective`, pct:Math.round(credits/19*100), v:confirmed?"green":"amber"},
-  //   {id:"mentor", emoji:"🎯",label:"Mentoring & Compliance", sub:`${compDone}/5 modules complete`,    pct:Math.round(compDone/5*100),       v:compDone===5?"green":"blue"},
-  // ];
+  const STAGES=[
+    {id:"docs",   emoji:"📄",label:"Document Verification",  sub:`${verifiedCount}/9 verified`,       pct:Math.round(verifiedCount/9*100), v:verifiedCount<9?"amber":"green"},
+    {id:"fee",    emoji:"💳",label:"Fee Payment",            sub:"₹1,88,500 paid · Complete",          pct:100,                             v:"green"},
+    {id:"courses",emoji:"📚",label:"Course Registration",    sub:confirmed?"19/19 credits done":`${credits}/19 credits · pick elective`, pct:Math.round(credits/19*100), v:confirmed?"green":"amber"},
+    {id:"mentor", emoji:"🎯",label:"Mentoring & Compliance", sub:`${compDone}/5 modules complete`,    pct:Math.round(compDone/5*100),       v:compDone===5?"green":"blue"},
+  ];
 
   return (
     <div style={{fontFamily:"'Sora',system-ui,sans-serif",background:"#f9fafb",minHeight:"100vh",color:"#111827"}}>
       {toast&&<Toast msg={toast.msg} type={toast.type}/>}
 
       {/* Topbar */}
-      <header className="app-header" style={{background:"#fff",borderBottom:"1.5px solid #f3f4f6"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginRight:16}}>
+      <header style={{background:"#fff",borderBottom:"1.5px solid #f3f4f6",padding:"0 24px",position:"sticky",top:0,zIndex:100,display:"flex",flexWrap:"wrap",alignItems:"center",minHeight:58}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginRight:32}}>
           <div style={{width:30,height:30,background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🎓</div>
-          <span className="hide-mobile" style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:"#111827",letterSpacing:"-0.03em"}}>Visored</span>
+          <span style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:"#111827",letterSpacing:"-0.03em"}}>Visored</span>
         </div>
-        <nav style={{display:"flex",gap:2, overflowX:"auto", flex:1}}>
+        <nav className="topbar-nav-student" style={{}}>
           {[["dashboard","Dashboard"],["timeline","Timeline"],["notifications","Alerts"]].map(([id,label])=>(
             <button key={id} onClick={()=>setPage(id)}
-              style={{padding:"6px 14px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:page===id?600:400,background:page===id?"#f0fdf4":"transparent",color:page===id?"#16a34a":"#6b7280",transition:"all .15s",position:"relative", whiteSpace:"nowrap"}}>
+              style={{padding:"6px 14px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:page===id?600:400,background:page===id?"#f0fdf4":"transparent",color:page===id?"#16a34a":"#6b7280",transition:"all .15s",position:"relative"}}>
               {label}
               {id==="notifications"&&unread>0&&<span style={{position:"absolute",top:2,right:4,width:14,height:14,background:"#ef4444",borderRadius:"50%",fontSize:9,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{unread}</span>}
             </button>
           ))}
         </nav>
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <div className="hide-mobile" style={{display:"flex",alignItems:"center",gap:8,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:20,padding:"5px 14px 5px 8px"}}>
+        <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:20,padding:"5px 14px 5px 8px"}}>
             <div style={{width:26,height:26,position:"relative",flexShrink:0}}>
               <ProgressRing pct={overallPct} size={26} stroke={3}/>
               <span style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:7,fontWeight:700,color:"#16a34a"}}>{overallPct}</span>
             </div>
             <span style={{fontSize:12,fontWeight:600,color:"#15803d"}}>{overallPct}% complete</span>
           </div>
-          <div className="hide-mobile" style={{display:"flex",alignItems:"center",gap:9,cursor:"pointer",padding:"4px 10px 4px 4px",borderRadius:20,border:"1.5px solid #f3f4f6",background:"#fff"}}>
+          <div style={{display:"flex",alignItems:"center",gap:9,cursor:"pointer",padding:"4px 10px 4px 4px",borderRadius:20,border:"1.5px solid #f3f4f6",background:"#fff"}}>
             <div style={{width:30,height:30,background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#fff"}}>AR</div>
             <div>
               <div style={{fontSize:12.5,fontWeight:600,color:"#111827",lineHeight:1.2}}>Arjun Rathi</div>
@@ -808,7 +859,7 @@ function StudentDashboard({ onLogout }) {
                   {t.done?"✓":t.milestone?"★":t.alert?"!":i+1}
                 </div>
                 <div style={{flex:1,paddingTop:4}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2, flexWrap:"wrap"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
                     <span style={{fontSize:13.5,fontWeight:t.done?500:600,color:t.done?"#6b7280":t.milestone?"#6d28d9":t.alert?"#92400e":"#111827"}}>{t.label}</span>
                     {t.alert&&!t.done&&<Badge v="amber">Deadline</Badge>}
                     {t.milestone&&<Badge v="purple">Milestone</Badge>}
@@ -823,9 +874,10 @@ function StudentDashboard({ onLogout }) {
 
       {/* DASHBOARD PAGE */}
       {page==="dashboard"&&(
-        <div className="grid-sidebar" style={{minHeight:"calc(100vh - 58px)"}}>
+        <div className="student-layout">{mobileNav&&<div onClick={()=>setMobileNav(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.3)",zIndex:299}}/>}
           {/* Sidebar */}
-          <aside className="sidebar-mobile" style={{background:"#fff",borderRight:"1.5px solid #f3f4f6",padding:"22px 0",position:"sticky",top:58,height:"calc(100vh - 58px)",overflowY:"auto"}}>
+          <aside className="student-sidebar" style={mobileNav?{display:"block",position:"fixed",top:0,left:0,width:"80vw",maxWidth:300,height:"100vh",zIndex:300,boxShadow:"4px 0 24px rgba(0,0,0,0.15)"}:{}}>
+            {mobileNav&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 16px 8px"}}><span style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:18,color:"#111827"}}>Visored</span><button onClick={()=>setMobileNav(false)} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#6b7280"}}>×</button></div>}
             <div style={{padding:"0 16px",marginBottom:24}}>
               <div style={{fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"#9ca3af",marginBottom:10,padding:"0 2px"}}>Progress</div>
               <div style={{background:"#f9fafb",border:"1.5px solid #f3f4f6",borderRadius:14,padding:"18px 14px",textAlign:"center"}}>
@@ -882,9 +934,9 @@ function StudentDashboard({ onLogout }) {
           </aside>
 
           {/* Main */}
-          <main className="main-content" style={{padding:"28px 32px",overflowY:"auto"}}>
+          <main style={{padding:"28px 32px",overflowY:"auto",paddingBottom:"80px"}} className="main-pad">
             <div style={{marginBottom:22,animation:"fadeUp .5s ease"}}>
-              <div className="flex-col-mobile" style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:16}}>
+              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:16}}>
                 <div>
                   <h1 style={{fontFamily:"'Fraunces',serif",fontSize:28,fontWeight:700,letterSpacing:"-0.025em",color:"#111827",lineHeight:1.2,marginBottom:5}}>
                     Good morning, <span style={{color:"#16a34a",fontStyle:"italic"}}>Arjun.</span>
@@ -899,7 +951,7 @@ function StudentDashboard({ onLogout }) {
             </div>
 
             {/* Stat row */}
-            <div className="grid-4" style={{marginBottom:20,animation:"fadeUp .5s .06s ease both"}}>
+            <div className="stat-grid-4" style={{animation:"fadeUp .5s .06s ease both"}}>
               {[[`${verifiedCount}/9`,"Docs Verified",verifiedCount===9?"#f0fdf4":"#fefce8",verifiedCount===9?"#16a34a":"#d97706"],["₹1,88,500","Fees Paid","#f0fdf4","#16a34a"],[`${credits}/19 cr`,"Credits",confirmed?"#f0fdf4":"#fefce8",confirmed?"#16a34a":"#d97706"],[`${compDone}/5`,"Compliance","#eff6ff","#2563eb"]].map(([val,label,bg,col],i)=>(
                 <div key={label} style={{background:bg,border:`1.5px solid ${col}22`,borderRadius:12,padding:"14px 16px",transition:"transform .15s"}}
                   onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
@@ -930,22 +982,22 @@ function StudentDashboard({ onLogout }) {
                 const bc=stage.v==="green"?"#16a34a":stage.v==="amber"?"#f59e0b":stage.v==="blue"?"#3b82f6":"#9ca3af";
                 return (
                   <div key={stage.id} style={{background:"#fff",border:`1.5px solid ${open?"#86efac":"#f3f4f6"}`,borderRadius:14,overflow:"hidden",boxShadow:open?"0 0 0 3px rgba(22,163,74,0.08)":"none",transition:"all .2s",animation:`fadeUp .5s ${.14+idx*.05}s ease both`}}>
-                    <div onClick={()=>setActive(open?null:stage.id)} style={{padding:"16px 20px",display:"flex",alignItems:"center",gap:14,cursor:"pointer", flexWrap:"wrap"}}>
+                    <div onClick={()=>setActive(open?null:stage.id)} style={{padding:"16px 20px",display:"flex",alignItems:"center",gap:14,cursor:"pointer"}}>
                       <div style={{width:42,height:42,borderRadius:12,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,background:stage.v==="green"?"#f0fdf4":stage.v==="amber"?"#fffbeb":stage.v==="blue"?"#eff6ff":"#f1f5f9"}}>{stage.emoji}</div>
-                      <div style={{flex:1, minWidth: 150}}>
+                      <div style={{flex:1}}>
                         <div style={{fontSize:14.5,fontWeight:700,color:"#111827",marginBottom:3}}>{stage.label}</div>
-                        <div style={{display:"flex",alignItems:"center",gap:8, flexWrap:"wrap"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
                           <div style={{width:100,height:4,background:"#f3f4f6",borderRadius:2,overflow:"hidden"}}>
                             <div style={{height:"100%",width:`${stage.pct}%`,background:bc,borderRadius:2,transition:"width .8s ease"}}/>
                           </div>
                           <span style={{fontSize:11.5,color:"#9ca3af",fontWeight:600}}>{stage.pct}%</span>
-                          <span className="hide-mobile" style={{fontSize:12,color:"#6b7280"}}>· {stage.sub}</span>
+                          <span style={{fontSize:12,color:"#6b7280"}}>· {stage.sub}</span>
                         </div>
                       </div>
                       <Badge v={stage.v==="green"?"green":stage.v==="amber"?"amber":stage.v==="blue"?"blue":"neutral"}>
                         {stage.pct===100?"✓ Complete":stage.id==="docs"?"Action needed":stage.id==="courses"?"6 days left":"In progress"}
                       </Badge>
-                      <span className="hide-mobile" style={{color:"#9ca3af",fontSize:18,marginLeft:4,display:"inline-block",transform:`rotate(${open?90:0}deg)`,transition:"transform .2s"}}>›</span>
+                      <span style={{color:"#9ca3af",fontSize:18,marginLeft:4,display:"inline-block",transform:`rotate(${open?90:0}deg)`,transition:"transform .2s"}}>›</span>
                     </div>
 
                     {open&&<div style={{borderTop:"1.5px solid #f9fafb",padding:"20px 20px"}}>
@@ -968,7 +1020,7 @@ function StudentDashboard({ onLogout }) {
                             </div>
                           ))}
                         </div>
-                        <div style={{display:"flex",gap:8,alignItems:"center", flexWrap:"wrap"}}>
+                        <div style={{display:"flex",gap:8,alignItems:"center"}}>
                           <button onClick={()=>{setChatOpen(true);quickAsk("What documents are pending and what exactly should I submit?");}} style={{padding:"9px 18px",borderRadius:10,border:"none",background:"#111827",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Ask EduBot for help</button>
                           <span style={{fontSize:12,color:"#9ca3af"}}>Deadline: <strong style={{color:"#dc2626"}}>Feb 20, 2026</strong></span>
                         </div>
@@ -976,7 +1028,7 @@ function StudentDashboard({ onLogout }) {
 
                       {/* FEE */}
                       {stage.id==="fee"&&<>
-                        <div className="grid-3" style={{marginBottom:18}}>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:18}}>
                           {[["Total Paid","₹1,88,500","#16a34a"],["Transaction Ref","TXN-2024-47891","#2563eb"],["Date","Jan 8–9, 2026","#6b7280"]].map(([l,v,c])=>(
                             <div key={l} style={{background:"#f9fafb",border:"1.5px solid #f3f4f6",borderRadius:10,padding:"12px",textAlign:"center"}}>
                               <div style={{fontSize:10.5,color:"#9ca3af",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:5}}>{l}</div>
@@ -984,12 +1036,10 @@ function StudentDashboard({ onLogout }) {
                             </div>
                           ))}
                         </div>
-                        <div className="table-responsive">
-                          <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,marginBottom:16}}>
-                            <thead><tr>{["Component","Paid on","Amount"].map(h=><th key={h} style={{textAlign:h==="Amount"?"right":"left",padding:"8px 0",fontSize:10.5,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",color:"#9ca3af",borderBottom:"1.5px solid #f3f4f6"}}>{h}</th>)}</tr></thead>
-                            <tbody>{FEES.map(f=><tr key={f.label}><td style={{padding:"11px 0",borderBottom:"1.5px solid #f9fafb",color:"#374151",fontWeight:500}}>{f.label}</td><td style={{padding:"11px 0",borderBottom:"1.5px solid #f9fafb"}}><Badge v="green">✓ {f.date}</Badge></td><td style={{padding:"11px 0",borderBottom:"1.5px solid #f9fafb",textAlign:"right",fontWeight:600,color:"#111827"}}>{fmt(f.amount)}</td></tr>)}</tbody>
-                          </table>
-                        </div>
+                        <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,marginBottom:16}}>
+                          <thead><tr>{["Component","Paid on","Amount"].map(h=><th key={h} style={{textAlign:h==="Amount"?"right":"left",padding:"8px 0",fontSize:10.5,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",color:"#9ca3af",borderBottom:"1.5px solid #f3f4f6"}}>{h}</th>)}</tr></thead>
+                          <tbody>{FEES.map(f=><tr key={f.label}><td style={{padding:"11px 0",borderBottom:"1.5px solid #f9fafb",color:"#374151",fontWeight:500}}>{f.label}</td><td style={{padding:"11px 0",borderBottom:"1.5px solid #f9fafb"}}><Badge v="green">✓ {f.date}</Badge></td><td style={{padding:"11px 0",borderBottom:"1.5px solid #f9fafb",textAlign:"right",fontWeight:600,color:"#111827"}}>{fmt(f.amount)}</td></tr>)}</tbody>
+                        </table>
                         <div style={{display:"flex",justifyContent:"space-between",padding:"12px 0",borderTop:"2px solid #f3f4f6",marginBottom:14}}>
                           <span style={{fontWeight:700,fontSize:14}}>Total Paid</span>
                           <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -1024,15 +1074,15 @@ function StudentDashboard({ onLogout }) {
                           <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
                             {ELECTIVES.map(el=>(
                               <div key={el.code} onClick={()=>setElective(el)}
-                                style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",border:`1.5px ${elective?.code===el.code?"solid #16a34a":"dashed #d1d5db"}`,borderRadius:9,fontSize:13,cursor:"pointer",background:elective?.code===el.code?"#f0fdf4":"#fff",transition:"all .15s", flexWrap:"wrap"}}>
+                                style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",border:`1.5px ${elective?.code===el.code?"solid #16a34a":"dashed #d1d5db"}`,borderRadius:9,fontSize:13,cursor:"pointer",background:elective?.code===el.code?"#f0fdf4":"#fff",transition:"all .15s"}}>
                                 <span style={{fontSize:10.5,fontWeight:700,color:"#9ca3af",width:44,flexShrink:0}}>{el.code}</span>
-                                <div style={{flex:1, minWidth: 120}}><div style={{fontWeight:600,color:"#111827"}}>{el.name}</div><div style={{fontSize:11,color:"#9ca3af",marginTop:1}}>{el.seats}/{el.total} seats</div></div>
+                                <div style={{flex:1}}><div style={{fontWeight:600,color:"#111827"}}>{el.name}</div><div style={{fontSize:11,color:"#9ca3af",marginTop:1}}>{el.seats}/{el.total} seats</div></div>
                                 <span style={{fontSize:12,color:"#6b7280"}}>{el.credits} cr</span>
                                 <Badge v={elective?.code===el.code?"green":el.tag==="Limited"?"amber":el.rec?"green":"neutral"}>{elective?.code===el.code?"✓ Selected":el.tag}</Badge>
                               </div>
                             ))}
                           </div>
-                          <div style={{display:"flex",gap:8, flexWrap:"wrap"}}>
+                          <div style={{display:"flex",gap:8}}>
                             <button onClick={confirmCourses} style={{padding:"10px 22px",borderRadius:10,border:"none",background:"#111827",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",boxShadow:"0 2px 8px rgba(0,0,0,0.15)"}}>Confirm Registration →</button>
                             <button onClick={()=>quickAsk("Which elective is best for ECE — Signals & Systems, Digital Logic Design, or Microcontrollers?")} style={{padding:"10px 18px",borderRadius:10,border:"1.5px solid #e5e7eb",background:"#fff",color:"#374151",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Ask AI for advice</button>
                           </div>
@@ -1046,9 +1096,9 @@ function StudentDashboard({ onLogout }) {
 
                       {/* MENTOR */}
                       {stage.id==="mentor"&&<>
-                        <div style={{display:"flex",alignItems:"flex-start",gap:16,padding:"16px 18px",background:"#f9fafb",border:"1.5px solid #f3f4f6",borderRadius:12,marginBottom:18, flexWrap:"wrap"}}>
+                        <div style={{display:"flex",alignItems:"flex-start",gap:16,padding:"16px 18px",background:"#f9fafb",border:"1.5px solid #f3f4f6",borderRadius:12,marginBottom:18}}>
                           <div style={{width:52,height:52,borderRadius:"50%",flexShrink:0,background:"linear-gradient(135deg,#16a34a,#15803d)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:700}}>P</div>
-                          <div style={{flex:1, minWidth: 180}}>
+                          <div style={{flex:1}}>
                             <div style={{fontSize:15,fontWeight:700,color:"#111827",marginBottom:2}}>Dr. Priya Menon</div>
                             <div style={{fontSize:12.5,color:"#6b7280",marginBottom:10}}>Asst. Professor · ECE Dept · PhD, IIT Madras</div>
                             <div style={{display:"flex",flexWrap:"wrap",gap:12}}>
@@ -1078,7 +1128,7 @@ function StudentDashboard({ onLogout }) {
               })}
             </div>
 
-            <div className="flex-col-mobile" style={{marginTop:20,padding:"14px 18px",background:"#f0fdf4",border:"1.5px solid #bbf7d0",borderRadius:12,display:"flex",alignItems:"center",gap:12,animation:"fadeUp .5s .4s ease both"}}>
+            <div style={{marginTop:20,padding:"14px 18px",background:"#f0fdf4",border:"1.5px solid #bbf7d0",borderRadius:12,display:"flex",alignItems:"center",gap:12,animation:"fadeUp .5s .4s ease both"}}>
               <span style={{fontSize:20}}>💡</span>
               <span style={{fontSize:13,color:"#374151",flex:1}}><strong style={{color:"#15803d"}}>EduBot tip:</strong> Upload your Transfer Certificate first — it's the most urgent pending item. Classes begin March 3.</span>
               <button onClick={()=>{setChatOpen(true);quickAsk("What's the most important thing I should do right now to complete my onboarding?");}} style={{padding:"6px 14px",borderRadius:8,border:"1.5px solid #86efac",background:"#fff",color:"#16a34a",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Ask AI →</button>
@@ -1087,9 +1137,25 @@ function StudentDashboard({ onLogout }) {
         </div>
       )}
 
+      {/* Mobile Bottom Nav */}
+      <div className="mobile-bottom-nav">
+        {[["dashboard","🏠","Home"],["timeline","📅","Timeline"],["notifications","🔔","Alerts"]].map(([id,icon,label])=>(
+          <button key={id} onClick={()=>{setPage(id);setMobileNav(false);}} style={{flex:1,padding:"10px 4px 8px",border:"none",background:page===id?"#f0fdf4":"#fff",color:page===id?"#16a34a":"#6b7280",cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:3,fontSize:10,fontWeight:page===id?700:500,position:"relative"}}>
+            <span style={{fontSize:20}}>{icon}</span>{label}
+            {id==="notifications"&&unread>0&&<span style={{position:"absolute",top:8,left:"calc(50% + 4px)",width:14,height:14,background:"#ef4444",borderRadius:"50%",fontSize:9,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{unread}</span>}
+          </button>
+        ))}
+        <button onClick={()=>{setChatOpen(true);}} style={{flex:1,padding:"10px 4px 8px",border:"none",background:"#fff",color:"#6b7280",cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:3,fontSize:10,fontWeight:500}}>
+          <span style={{fontSize:20}}>💬</span>EduBot
+        </button>
+        <button onClick={onLogout} style={{flex:1,padding:"10px 4px 8px",border:"none",background:"#fff",color:"#dc2626",cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:3,fontSize:10,fontWeight:500}}>
+          <span style={{fontSize:20}}>🚪</span>Logout
+        </button>
+      </div>
+
       {/* Floating Chat */}
-      <div className="chat-window-container" style={{position:"fixed",bottom:24,right:24,zIndex:500}}>
-        <div className="chat-window" style={{position:"absolute",bottom:66,right:0,width:368,background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:22,boxShadow:"0 20px 60px rgba(0,0,0,0.12)",display:"flex",flexDirection:"column",maxHeight:540,overflow:"hidden",opacity:chatOpen?1:0,pointerEvents:chatOpen?"all":"none",transform:chatOpen?"translateY(0) scale(1)":"translateY(16px) scale(0.96)",transition:"all .22s cubic-bezier(.4,0,.2,1)"}}>
+      <div style={{position:"fixed",bottom:24,right:24,zIndex:500}}>
+        <div className="chat-widget-box" style={{opacity:chatOpen?1:0,pointerEvents:chatOpen?"all":"none",transform:chatOpen?"translateY(0) scale(1)":"translateY(16px) scale(0.96)",transition:"all .22s cubic-bezier(.4,0,.2,1)"}}>
           <div style={{padding:"14px 16px",borderBottom:"1.5px solid #f9fafb",display:"flex",alignItems:"center",gap:10,flexShrink:0,background:"linear-gradient(135deg,#f0fdf4,#dcfce7)"}}>
             <div style={{width:38,height:38,background:"#111827",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,position:"relative"}}>
               🤖<div style={{position:"absolute",bottom:0,right:0,width:11,height:11,background:"#16a34a",borderRadius:"50%",border:"2.5px solid #f0fdf4"}}/>
@@ -1136,74 +1202,15 @@ function StudentDashboard({ onLogout }) {
       </div>
     </div>
   );
-
+}
 
 // ═════════════════════════════════════════════════════════════════════════════
 // ROOT
 // ═════════════════════════════════════════════════════════════════════════════
 export default function App() {
-  const [user, setUser] = useState(null); // stores 'student' or 'admin'
+  const [session, setSession] = useState(null); // null | "student" | "admin"
 
-  if (!user) {
-    return <LoginScreen onLogin={(role) => setUser(role)} />;
-  }
-
-  return user === "admin" ? (
-    <AdminDashboard onLogout={() => setUser(null)} />
-  ) : (
-    <StudentDashboard onLogout={() => setUser(null)} />
-  );
+  if (!session) return <LoginScreen onLogin={role => setSession(role)} />;
+  if (session === "admin") return <AdminDashboard onLogout={() => setSession(null)} />;
+  return <StudentDashboard onLogout={() => setSession(null)} />;
 }
-
-
-  return (
-    <>
-      <style>{`
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; }
-        
-        /* Grid Utilities */
-        .login-grid { display: grid; grid-template-columns: 1fr 1fr; }
-        .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-        .grid-sidebar { display: grid; grid-template-columns: 264px 1fr; }
-        .grid-profile { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
-        
-        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: none } }
-        @keyframes toastIn { from { opacity: 0; transform: translateX(24px) } to { opacity: 1; transform: none } }
-        @keyframes msgIn { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
-        @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: .4 } 30% { transform: translateY(-5px); opacity: 1 } }
-        
-        /* Tablet Breakpoints */
-        @media (max-width: 1024px) {
-          .login-grid { grid-template-columns: 380px 1fr; }
-          .grid-5 { grid-template-columns: repeat(3, 1fr); }
-          .grid-4 { grid-template-columns: repeat(2, 1fr); }
-          .grid-profile { grid-template-columns: 1fr; }
-        }
-
-        /* Mobile Breakpoints */
-        @media (max-width: 768px) {
-          .login-grid, .grid-5, .grid-4, .grid-3, .grid-2, .grid-sidebar { grid-template-columns: 1fr !important; }
-          .login-left-panel, .hide-mobile { display: none !important; }
-          
-          .app-header { padding: 12px 16px !important; height: auto !important; flex-wrap: wrap !important; gap: 12px !important; }
-          .sidebar-mobile { position: static !important; height: auto !important; border-right: none !important; border-bottom: 1.5px solid #f3f4f6 !important; }
-          .main-content { padding: 16px !important; }
-          .flex-col-mobile { flex-direction: column !important; align-items: stretch !important; }
-          
-          /* Fullscreen Chat on Mobile */
-          .chat-window { width: calc(100vw - 32px) !important; max-height: 70vh !important; }
-          .chat-window-container { bottom: 16px !important; right: 16px !important; }
-        }
-      `}</style>
-
-      {!session && <LoginScreen onLogin={role => setSession(role)} />}
-      {session === "admin" && <AdminDashboard onLogout={() => setSession(null)} />}
-      {session === "student" && <StudentDashboard onLogout={() => setSession(null)} />}
-    </>
-  );
