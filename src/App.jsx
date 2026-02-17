@@ -1,4 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+// ─── RESPONSIVE HOOK ──────────────────────────────────────────────────────────
+function useWindowWidth() {
+  const [w, setW] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
+  useEffect(() => {
+    const fn = () => setW(window.innerWidth);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
+  return w;
+}
+
 
 // ─── CREDENTIALS ─────────────────────────────────────────────────────────────
 const USERS = {
@@ -74,6 +85,7 @@ function Toast({msg,type}) {
 // LOGIN SCREEN
 // ═════════════════════════════════════════════════════════════════════════════
 function LoginScreen({ onLogin }) {
+  const isMobile = useWindowWidth() < 768;
   const [tab, setTab]       = useState("student");
   const [id, setId]         = useState("");
   const [pass, setPass]     = useState("");
@@ -102,9 +114,9 @@ function LoginScreen({ onLogin }) {
   const fillHint = () => { setId(hints[tab].id); setPass(hints[tab].pass); };
 
   return (
-    <div className="login-grid" style={{fontFamily:"'Sora',system-ui,sans-serif"}}>
+    <div style={{minHeight:"100vh",display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",fontFamily:"'Sora',system-ui,sans-serif"}}>
       {/* Left Panel */}
-      <div className="login-left" style={{background:"linear-gradient(160deg,#0f1a0f 0%,#0a2e1a 50%,#082215 100%)"}}>
+      <div style={{background:"linear-gradient(160deg,#0f1a0f 0%,#0a2e1a 50%,#082215 100%)",display:isMobile?"none":"flex",flexDirection:"column",justifyContent:"space-between",padding:"48px 52px",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",inset:0,backgroundImage:"radial-gradient(circle at 20% 80%,rgba(22,163,74,0.12) 0%,transparent 60%),radial-gradient(circle at 80% 20%,rgba(22,163,74,0.08) 0%,transparent 50%)",pointerEvents:"none"}}/>
         <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px)",backgroundSize:"40px 40px",pointerEvents:"none"}}/>
 
@@ -139,7 +151,7 @@ function LoginScreen({ onLogin }) {
       </div>
 
       {/* Right Panel */}
-      <div className="login-right">
+      <div style={{background:"#f9fafb",display:"flex",alignItems:"center",justifyContent:"center",padding:isMobile?"32px 20px":"48px 52px",minHeight:isMobile?"100vh":"auto"}}>
         <div style={{width:"100%",maxWidth:400,animation:"fadeUp .5s ease"}}>
 
           <h2 style={{fontFamily:"'Fraunces',serif",fontSize:28,fontWeight:700,color:"#111827",marginBottom:6,letterSpacing:"-0.02em"}}>
@@ -233,59 +245,7 @@ function LoginScreen({ onLogin }) {
 
         </div>
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900&family=Sora:wght@300;400;500;600;700;800&display=swap');@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}@keyframes toastIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}*{box-sizing:border-box;}input,button{outline:none;}
-.login-grid{display:grid;grid-template-columns:1fr 1fr;min-height:100vh;}
-.login-left{display:flex;flex-direction:column;justify-content:space-between;padding:48px 52px;position:relative;overflow:hidden;}
-.login-right{background:#f9fafb;display:flex;align-items:center;justify-content:center;padding:48px 52px;}
-.stat-grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:28px;}
-.stat-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
-.two-col-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
-.two-col-gap16{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-.detail-grid{display:grid;grid-template-columns:280px 1fr;gap:20px;}
-.student-layout{display:grid;grid-template-columns:264px 1fr;min-height:calc(100vh - 58px);}
-.student-sidebar{background:#fff;border-right:1.5px solid #f3f4f6;padding:22px 0;position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto;}
-.chat-widget-box{position:absolute;bottom:66px;right:0;width:368px;background:#fff;border:1.5px solid #f3f4f6;border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,0.12);display:flex;flex-direction:column;max-height:540px;overflow:hidden;}
-.topbar-nav-admin{display:flex;gap:2px;}
-.topbar-nav-student{display:flex;gap:2px;}
-.topbar-right-admin{margin-left:auto;display:flex;align-items:center;gap:12px;}
-.topbar-right-student{margin-left:auto;display:flex;align-items:center;gap:12px;}
-.admin-user-label{font-size:12px;color:rgba(255,255,255,0.5);}
-.mobile-hamburger{display:none;background:none;border:none;cursor:pointer;font-size:22px;padding:4px;}
-.mobile-bottom-nav{display:none;}
-@media(max-width:900px){
-  .stat-grid-5{grid-template-columns:repeat(3,1fr);}
-  .two-col-grid{grid-template-columns:1fr;}
-  .two-col-gap16{grid-template-columns:1fr;}
-  .detail-grid{grid-template-columns:1fr;}
-}
-@media(max-width:768px){
-  .main-pad{padding:16px!important;}
-  .login-grid{grid-template-columns:1fr;}
-  .login-left{display:none;}
-  .login-right{padding:32px 20px;min-height:100vh;}
-  .stat-grid-5{grid-template-columns:repeat(2,1fr);}
-  .stat-grid-4{grid-template-columns:repeat(2,1fr);}
-  .two-col-grid{grid-template-columns:1fr;}
-  .two-col-gap16{grid-template-columns:1fr;}
-  .detail-grid{grid-template-columns:1fr;}
-  .student-layout{grid-template-columns:1fr;}
-  .student-sidebar{display:none;}
-  .chat-widget-box{width:calc(100vw - 48px);right:-8px;max-height:70vh;}
-  .topbar-nav-admin,.topbar-nav-student{display:none;}
-  .topbar-right-admin{gap:6px;}
-  .topbar-right-student{gap:6px;}
-  .admin-user-label{display:none;}
-  .hide-on-mobile{display:none!important;}
-  .mobile-hamburger{display:flex;align-items:center;justify-content:center;}
-  .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1.5px solid #f3f4f6;z-index:200;padding:0;}
-  .main-pad{padding:16px!important;}
-  table{font-size:12px;}
-  table th,table td{padding:8px 10px!important;}
-}
-@media(max-width:480px){
-  .stat-grid-5{grid-template-columns:repeat(2,1fr);}
-  .stat-grid-4{grid-template-columns:repeat(2,1fr);}
-}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900&family=Sora:wght@300;400;500;600;700;800&display=swap');@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}@keyframes toastIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}*{box-sizing:border-box;margin:0;padding:0;}input,button{outline:none;}body{overflow-x:hidden;}`}</style>
     </div>
   );
 }
@@ -294,6 +254,7 @@ function LoginScreen({ onLogin }) {
 // ADMIN DASHBOARD
 // ═════════════════════════════════════════════════════════════════════════════
 function AdminDashboard({ onLogout }) {
+  const isMobile = useWindowWidth() < 768;
   const [page, setPage]       = useState("overview");
   const [mobileNav, setMobileNav] = useState(false);
   const [search, setSearch]   = useState("");
@@ -331,26 +292,39 @@ function AdminDashboard({ onLogout }) {
       {toast && <Toast msg={toast.msg} type={toast.type}/>}
 
       {/* Admin Topbar */}
-      <header style={{background:"#111827",padding:"0 24px",position:"sticky",top:0,zIndex:100,display:"flex",flexWrap:"wrap",alignItems:"center",gap:0,minHeight:58}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginRight:32}}>
+      <header style={{background:"#111827",position:"sticky",top:0,zIndex:100}}>
+        <div style={{display:"flex",alignItems:"center",height:58,padding:"0 24px",gap:10}}>
           <div style={{width:30,height:30,background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🎓</div>
           <span style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:"#fff",letterSpacing:"-0.03em"}}>Visored</span>
-          <span style={{fontSize:11,fontWeight:600,background:"rgba(22,163,74,0.25)",color:"#4ade80",padding:"3px 10px",borderRadius:20,marginLeft:4,letterSpacing:"0.04em"}}>ADMIN</span>
+          {!isMobile && <span style={{fontSize:11,fontWeight:600,background:"rgba(22,163,74,0.25)",color:"#4ade80",padding:"3px 10px",borderRadius:20,marginLeft:4,letterSpacing:"0.04em"}}>ADMIN</span>}
+          {isMobile ? (
+            <button onClick={()=>setMobileNav(!mobileNav)} style={{marginLeft:"auto",background:"none",border:"none",color:"#fff",fontSize:24,cursor:"pointer",padding:"4px 8px",lineHeight:1}}>☰</button>
+          ) : null}
         </div>
-        <nav className="topbar-nav-admin" style={{}}>
-          {[["overview","Overview"],["students","Students"],["analytics","Analytics"]].map(([id,label])=>(
-            <button key={id} onClick={()=>{setPage(id);setSel(null);}}
-              style={{padding:"6px 14px",borderRadius:8,border:"none",cursor:"pointer",
-                fontFamily:"inherit",fontSize:13,fontWeight:page===id?600:400,
-                background:page===id?"rgba(255,255,255,0.12)":"transparent",
-                color:page===id?"#fff":"rgba(255,255,255,0.5)",transition:"all .15s"}}>
-              {label}
-            </button>
-          ))}
-        </nav>
-        <button className="mobile-hamburger" onClick={()=>setMobileNav(!mobileNav)} style={{marginLeft:"auto",color:"#fff"}}>☰</button>
-        <div style={{marginLeft:0,display:"flex",alignItems:"center",gap:12}}>
-          <span className="admin-user-label">Dr. Admin · Registrar's Office</span>
+        {/* Mobile drawer */}
+        {isMobile && mobileNav && (
+          <div style={{background:"#1a2e1a",borderTop:"1px solid rgba(255,255,255,0.1)"}}>
+            {[["overview","🏠 Overview"],["students","👥 Students"],["analytics","📊 Analytics"]].map(([id,label])=>(
+              <button key={id} onClick={()=>{setPage(id);setSel(null);setMobileNav(false);}}
+                style={{display:"block",width:"100%",padding:"14px 24px",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:page===id?700:400,background:page===id?"rgba(22,163,74,0.2)":"transparent",color:page===id?"#4ade80":"rgba(255,255,255,0.7)",textAlign:"left"}}>
+                {label}
+              </button>
+            ))}
+            <button onClick={onLogout} style={{display:"block",width:"100%",padding:"14px 24px",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:14,background:"transparent",color:"#f87171",textAlign:"left"}}>🚪 Sign out</button>
+          </div>
+        )}
+        {!isMobile && (
+          <nav style={{display:"flex",gap:2,padding:"0 8px"}}>
+            {[["overview","Overview"],["students","Students"],["analytics","Analytics"]].map(([id,label])=>(
+              <button key={id} onClick={()=>{setPage(id);setSel(null);}}
+                style={{padding:"6px 14px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:page===id?600:400,background:page===id?"rgba(255,255,255,0.12)":"transparent",color:page===id?"#fff":"rgba(255,255,255,0.5)",transition:"all .15s"}}>
+                {label}
+              </button>
+            ))}
+          </nav>
+        )}
+        {!isMobile && <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:12,paddingRight:24}}>
+          <div style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>Dr. Admin · Registrar's Office</div>
           <button onClick={onLogout}
             style={{padding:"7px 16px",borderRadius:9,border:"1.5px solid rgba(255,255,255,0.2)",
               background:"transparent",color:"rgba(255,255,255,0.7)",fontSize:12,fontWeight:600,
@@ -359,22 +333,10 @@ function AdminDashboard({ onLogout }) {
             onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color="rgba(255,255,255,0.7)";}}>
             Sign out
           </button>
-        </div>
+        </div>}
       </header>
 
-      {/* Mobile Nav Drawer */}
-      {mobileNav && (
-        <div style={{background:"#1f2937",padding:"8px 16px 16px",position:"sticky",top:58,zIndex:99}}>
-          {[["overview","Overview"],["students","Students"],["analytics","Analytics"]].map(([id,label])=>(
-            <button key={id} onClick={()=>{setPage(id);setSel(null);setMobileNav(false);}}
-              style={{display:"block",width:"100%",padding:"10px 14px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:page===id?600:400,background:page===id?"rgba(255,255,255,0.12)":"transparent",color:page===id?"#fff":"rgba(255,255,255,0.6)",textAlign:"left",marginBottom:4}}>
-              {label}
-            </button>
-          ))}
-          <button onClick={onLogout} style={{display:"block",width:"100%",padding:"10px 14px",borderRadius:8,border:"1.5px solid rgba(255,255,255,0.2)",cursor:"pointer",fontFamily:"inherit",fontSize:14,background:"transparent",color:"rgba(255,255,255,0.7)",textAlign:"left",marginTop:8}}>Sign out</button>
-        </div>
-      )}
-      <div style={{padding:"28px 32px",maxWidth:1200,margin:"0 auto"}} style={{padding:"28px 32px",maxWidth:1200,margin:"0 auto",paddingBottom:24}}>
+      <div style={{padding:isMobile?"16px":"28px 32px",maxWidth:1200,margin:"0 auto"}}>
 
         {/* OVERVIEW */}
         {page==="overview" && <>
@@ -383,7 +345,7 @@ function AdminDashboard({ onLogout }) {
             <p style={{fontSize:13.5,color:"#6b7280"}}>Batch 2024–28 onboarding status · {new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"})}</p>
           </div>
           {/* Stat cards */}
-          <div className="stat-grid-5">
+          <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(5,1fr)",gap:12,marginBottom:28}}>
             {[
               ["👥",stats.total,"Total Students","#f0fdf4","#16a34a"],
               ["✅",stats.complete,"Fully Onboarded","#f0fdf4","#16a34a"],
@@ -420,7 +382,7 @@ function AdminDashboard({ onLogout }) {
           </div>
 
           {/* Stage breakdown */}
-          <div className="two-col-gap16">
+          <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:16}}>
             {[
               {label:"Document Verification",icon:"📄",done:STUDENTS_DB.filter(s=>s.docs===9).length,total:stats.total},
               {label:"Fee Payment",icon:"💳",done:STUDENTS_DB.filter(s=>s.fees).length,total:stats.total},
@@ -482,7 +444,7 @@ function AdminDashboard({ onLogout }) {
           </div>
 
           {/* Table */}
-          <div style={{background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:14,overflow:"hidden",overflowX:"auto"}}>
+          <div style={{background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:14,overflow:"auto"}}>
             <table style={{width:"100%",borderCollapse:"collapse"}}>
               <thead>
                 <tr style={{background:"#f9fafb",borderBottom:"1.5px solid #f3f4f6"}}>
@@ -509,7 +471,7 @@ function AdminDashboard({ onLogout }) {
                         <span style={{fontSize:13.5,fontWeight:600,color:"#111827"}}>{s.name}</span>
                       </div>
                     </td>
-                    <td className="hide-on-mobile" style={{padding:"13px 16px",fontSize:12.5,color:"#6b7280",fontWeight:500}}>{s.roll}</td>
+                    <td style={{padding:"13px 16px",fontSize:12.5,color:"#6b7280",fontWeight:500}}>{s.roll}</td>
                     <td style={{padding:"13px 16px"}}><Badge v="neutral">{s.branch}</Badge></td>
                     <td style={{padding:"13px 16px"}}>
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -549,7 +511,7 @@ function AdminDashboard({ onLogout }) {
                 background:"#fff",color:"#374151",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
               ← Back to Students
             </button>
-            <div className="detail-grid">
+            <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"280px 1fr",gap:20}}>
               {/* Profile card */}
               <div>
                 <div style={{background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:14,overflow:"hidden",marginBottom:14}}>
@@ -622,7 +584,7 @@ function AdminDashboard({ onLogout }) {
         {page==="analytics" && (
           <div>
             <h2 style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,letterSpacing:"-0.02em",marginBottom:20}}>Analytics</h2>
-            <div className="two-col-grid">
+            <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:20}}>
 
               {/* Branch breakdown */}
               <div style={{background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:14,padding:"20px 22px"}}>
@@ -715,6 +677,7 @@ function AdminDashboard({ onLogout }) {
 // STUDENT DASHBOARD (preserved from previous version)
 // ═════════════════════════════════════════════════════════════════════════════
 function StudentDashboard({ onLogout }) {
+  const isMobile = useWindowWidth() < 768;
   const [page,setPage]           = useState("dashboard");
   const [mobileNav,setMobileNav] = useState(false);
   const [docs,setDocs]           = useState(INITIAL_DOCS);
@@ -781,21 +744,26 @@ function StudentDashboard({ onLogout }) {
       {toast&&<Toast msg={toast.msg} type={toast.type}/>}
 
       {/* Topbar */}
-      <header style={{background:"#fff",borderBottom:"1.5px solid #f3f4f6",padding:"0 24px",position:"sticky",top:0,zIndex:100,display:"flex",flexWrap:"wrap",alignItems:"center",minHeight:58}}>
+      <header style={{background:"#fff",borderBottom:"1.5px solid #f3f4f6",display:"flex",alignItems:"center",padding:"0 16px",position:"sticky",top:0,zIndex:100,height:58,gap:8}}>
         <div style={{display:"flex",alignItems:"center",gap:10,marginRight:32}}>
           <div style={{width:30,height:30,background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🎓</div>
           <span style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:"#111827",letterSpacing:"-0.03em"}}>Visored</span>
         </div>
-        <nav className="topbar-nav-student" style={{}}>
-          {[["dashboard","Dashboard"],["timeline","Timeline"],["notifications","Alerts"]].map(([id,label])=>(
-            <button key={id} onClick={()=>setPage(id)}
-              style={{padding:"6px 14px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:page===id?600:400,background:page===id?"#f0fdf4":"transparent",color:page===id?"#16a34a":"#6b7280",transition:"all .15s",position:"relative"}}>
-              {label}
-              {id==="notifications"&&unread>0&&<span style={{position:"absolute",top:2,right:4,width:14,height:14,background:"#ef4444",borderRadius:"50%",fontSize:9,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{unread}</span>}
-            </button>
-          ))}
-        </nav>
-        <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:12}}>
+        {!isMobile && (
+          <nav style={{display:"flex",gap:2}}>
+            {[["dashboard","Dashboard"],["timeline","Timeline"],["notifications","Alerts"]].map(([id,label])=>(
+              <button key={id} onClick={()=>setPage(id)}
+                style={{padding:"6px 14px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:page===id?600:400,background:page===id?"#f0fdf4":"transparent",color:page===id?"#16a34a":"#6b7280",transition:"all .15s",position:"relative"}}>
+                {label}
+                {id==="notifications"&&unread>0&&<span style={{position:"absolute",top:2,right:4,width:14,height:14,background:"#ef4444",borderRadius:"50%",fontSize:9,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{unread}</span>}
+              </button>
+            ))}
+          </nav>
+        )}
+        {isMobile && (
+          <button onClick={()=>setMobileNav(!mobileNav)} style={{marginLeft:"auto",background:"none",border:"none",fontSize:24,cursor:"pointer",color:"#374151",padding:"4px 8px",lineHeight:1}}>☰</button>
+        )}
+        {!isMobile && <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:12}}>
           <div style={{display:"flex",alignItems:"center",gap:8,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:20,padding:"5px 14px 5px 8px"}}>
             <div style={{width:26,height:26,position:"relative",flexShrink:0}}>
               <ProgressRing pct={overallPct} size={26} stroke={3}/>
@@ -817,7 +785,7 @@ function StudentDashboard({ onLogout }) {
             onMouseLeave={e=>{e.currentTarget.style.borderColor="#e5e7eb";e.currentTarget.style.color="#6b7280";}}>
             Sign out
           </button>
-        </div>
+        </div>}
       </header>
 
       {/* NOTIFICATIONS PAGE */}
@@ -874,10 +842,25 @@ function StudentDashboard({ onLogout }) {
 
       {/* DASHBOARD PAGE */}
       {page==="dashboard"&&(
-        <div className="student-layout">{mobileNav&&<div onClick={()=>setMobileNav(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.3)",zIndex:299}}/>}
+        <div style={{display:"flex",minHeight:"calc(100vh - 58px)"}}>
+          {/* Mobile sidebar overlay */}
+          {isMobile && mobileNav && (
+            <div onClick={()=>setMobileNav(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:298}}/>
+          )}
           {/* Sidebar */}
-          <aside className="student-sidebar" style={mobileNav?{display:"block",position:"fixed",top:0,left:0,width:"80vw",maxWidth:300,height:"100vh",zIndex:300,boxShadow:"4px 0 24px rgba(0,0,0,0.15)"}:{}}>
-            {mobileNav&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 16px 8px"}}><span style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:18,color:"#111827"}}>Visored</span><button onClick={()=>setMobileNav(false)} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#6b7280"}}>×</button></div>}
+          <aside style={{background:"#fff",borderRight:"1.5px solid #f3f4f6",padding:"22px 0",overflowY:"auto",flexShrink:0,
+            ...(isMobile ? {
+              position:"fixed",top:0,left:mobileNav?0:"-300px",width:280,height:"100vh",zIndex:299,
+              transition:"left .25s cubic-bezier(.4,0,.2,1)",boxShadow:mobileNav?"4px 0 24px rgba(0,0,0,0.15)":"none"
+            } : {
+              width:264,position:"sticky",top:58,height:"calc(100vh - 58px)"
+            })}}>
+            {isMobile && (
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px 4px"}}>
+                <span style={{fontFamily:"'Fraunces',serif",fontSize:18,fontWeight:700,color:"#111827"}}>Menu</span>
+                <button onClick={()=>setMobileNav(false)} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#6b7280",lineHeight:1}}>×</button>
+              </div>
+            )}
             <div style={{padding:"0 16px",marginBottom:24}}>
               <div style={{fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"#9ca3af",marginBottom:10,padding:"0 2px"}}>Progress</div>
               <div style={{background:"#f9fafb",border:"1.5px solid #f3f4f6",borderRadius:14,padding:"18px 14px",textAlign:"center"}}>
@@ -920,6 +903,11 @@ function StudentDashboard({ onLogout }) {
               </div>
             </div>
 
+            {isMobile && (
+              <div style={{padding:"16px"}}>
+                <button onClick={onLogout} style={{width:"100%",padding:"11px",borderRadius:10,border:"1.5px solid #fee2e2",background:"#fff",color:"#dc2626",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>🚪 Sign out</button>
+              </div>
+            )}
             <div style={{padding:"0 16px"}}>
               <div style={{fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"#9ca3af",marginBottom:10,padding:"0 2px"}}>Ask EduBot</div>
               {["Pending documents?","Best elective for ECE?","When is orientation?","How to activate LMS?"].map(q=>(
@@ -934,24 +922,24 @@ function StudentDashboard({ onLogout }) {
           </aside>
 
           {/* Main */}
-          <main style={{padding:"28px 32px",overflowY:"auto",paddingBottom:"80px"}} className="main-pad">
+          <main style={{flex:1,padding:isMobile?"16px 14px 80px":"28px 32px",overflowY:"auto",minWidth:0}}>
             <div style={{marginBottom:22,animation:"fadeUp .5s ease"}}>
               <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:16}}>
                 <div>
-                  <h1 style={{fontFamily:"'Fraunces',serif",fontSize:28,fontWeight:700,letterSpacing:"-0.025em",color:"#111827",lineHeight:1.2,marginBottom:5}}>
+                  <h1 style={{fontFamily:"'Fraunces',serif",fontSize:isMobile?22:28,fontWeight:700,letterSpacing:"-0.025em",color:"#111827",lineHeight:1.2,marginBottom:5}}>
                     Good morning, <span style={{color:"#16a34a",fontStyle:"italic"}}>Arjun.</span>
                   </h1>
                   <p style={{fontSize:13.5,color:"#6b7280"}}>{overallPct<100?`You're ${overallPct}% through — ${4-STAGES.filter(s=>s.pct===100).length} stage(s) left before Mar 3.`:"🎉 All complete! Classes start Mar 3."}</p>
                 </div>
-                <div style={{display:"flex",gap:8,flexShrink:0}}>
+                {!isMobile && <div style={{display:"flex",gap:8,flexShrink:0}}>
                   <button onClick={()=>setPage("timeline")} style={{padding:"8px 16px",borderRadius:10,border:"1.5px solid #e5e7eb",background:"#fff",color:"#374151",fontSize:12.5,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>📅 Timeline</button>
                   <button onClick={()=>setChatOpen(true)} style={{padding:"8px 16px",borderRadius:10,border:"none",background:"#16a34a",color:"#fff",fontSize:12.5,fontWeight:600,cursor:"pointer",fontFamily:"inherit",boxShadow:"0 2px 8px rgba(22,163,74,0.3)"}}>💬 Ask EduBot</button>
-                </div>
+                </div>}
               </div>
             </div>
 
             {/* Stat row */}
-            <div className="stat-grid-4" style={{animation:"fadeUp .5s .06s ease both"}}>
+            <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)",gap:10,marginBottom:16,animation:"fadeUp .5s .06s ease both"}}>
               {[[`${verifiedCount}/9`,"Docs Verified",verifiedCount===9?"#f0fdf4":"#fefce8",verifiedCount===9?"#16a34a":"#d97706"],["₹1,88,500","Fees Paid","#f0fdf4","#16a34a"],[`${credits}/19 cr`,"Credits",confirmed?"#f0fdf4":"#fefce8",confirmed?"#16a34a":"#d97706"],[`${compDone}/5`,"Compliance","#eff6ff","#2563eb"]].map(([val,label,bg,col],i)=>(
                 <div key={label} style={{background:bg,border:`1.5px solid ${col}22`,borderRadius:12,padding:"14px 16px",transition:"transform .15s"}}
                   onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
@@ -1028,7 +1016,7 @@ function StudentDashboard({ onLogout }) {
 
                       {/* FEE */}
                       {stage.id==="fee"&&<>
-                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:18}}>
+                        <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr 1fr",gap:10,marginBottom:18}}>
                           {[["Total Paid","₹1,88,500","#16a34a"],["Transaction Ref","TXN-2024-47891","#2563eb"],["Date","Jan 8–9, 2026","#6b7280"]].map(([l,v,c])=>(
                             <div key={l} style={{background:"#f9fafb",border:"1.5px solid #f3f4f6",borderRadius:10,padding:"12px",textAlign:"center"}}>
                               <div style={{fontSize:10.5,color:"#9ca3af",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:5}}>{l}</div>
@@ -1138,24 +1126,27 @@ function StudentDashboard({ onLogout }) {
       )}
 
       {/* Mobile Bottom Nav */}
-      <div className="mobile-bottom-nav">
-        {[["dashboard","🏠","Home"],["timeline","📅","Timeline"],["notifications","🔔","Alerts"]].map(([id,icon,label])=>(
-          <button key={id} onClick={()=>{setPage(id);setMobileNav(false);}} style={{flex:1,padding:"10px 4px 8px",border:"none",background:page===id?"#f0fdf4":"#fff",color:page===id?"#16a34a":"#6b7280",cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:3,fontSize:10,fontWeight:page===id?700:500,position:"relative"}}>
-            <span style={{fontSize:20}}>{icon}</span>{label}
-            {id==="notifications"&&unread>0&&<span style={{position:"absolute",top:8,left:"calc(50% + 4px)",width:14,height:14,background:"#ef4444",borderRadius:"50%",fontSize:9,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{unread}</span>}
+      {isMobile && (
+        <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#fff",borderTop:"1.5px solid #f3f4f6",zIndex:400,display:"flex",height:60}}>
+          {[["dashboard","🏠","Home"],["timeline","📅","Timeline"],["notifications","🔔","Alerts"]].map(([id,icon,label])=>(
+            <button key={id} onClick={()=>{setPage(id);setMobileNav(false);}}
+              style={{flex:1,border:"none",background:page===id?"#f0fdf4":"#fff",color:page===id?"#16a34a":"#6b7280",cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,fontSize:10,fontWeight:page===id?700:500,position:"relative",borderTop:page===id?"2px solid #16a34a":"2px solid transparent"}}>
+              <span style={{fontSize:19}}>{icon}</span>{label}
+              {id==="notifications"&&unread>0&&<span style={{position:"absolute",top:6,left:"calc(50% + 6px)",width:14,height:14,background:"#ef4444",borderRadius:"50%",fontSize:9,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{unread}</span>}
+            </button>
+          ))}
+          <button onClick={()=>{setChatOpen(true);}} style={{flex:1,border:"none",background:"#fff",color:"#6b7280",cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,fontSize:10,fontWeight:500,borderTop:"2px solid transparent"}}>
+            <span style={{fontSize:19}}>💬</span>EduBot
           </button>
-        ))}
-        <button onClick={()=>{setChatOpen(true);}} style={{flex:1,padding:"10px 4px 8px",border:"none",background:"#fff",color:"#6b7280",cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:3,fontSize:10,fontWeight:500}}>
-          <span style={{fontSize:20}}>💬</span>EduBot
-        </button>
-        <button onClick={onLogout} style={{flex:1,padding:"10px 4px 8px",border:"none",background:"#fff",color:"#dc2626",cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:3,fontSize:10,fontWeight:500}}>
-          <span style={{fontSize:20}}>🚪</span>Logout
-        </button>
-      </div>
+          <button onClick={onLogout} style={{flex:1,border:"none",background:"#fff",color:"#dc2626",cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,fontSize:10,fontWeight:500,borderTop:"2px solid transparent"}}>
+            <span style={{fontSize:19}}>🚪</span>Logout
+          </button>
+        </div>
+      )}
 
       {/* Floating Chat */}
-      <div style={{position:"fixed",bottom:24,right:24,zIndex:500}}>
-        <div className="chat-widget-box" style={{opacity:chatOpen?1:0,pointerEvents:chatOpen?"all":"none",transform:chatOpen?"translateY(0) scale(1)":"translateY(16px) scale(0.96)",transition:"all .22s cubic-bezier(.4,0,.2,1)"}}>
+      <div style={{position:"fixed",bottom:isMobile?74:24,right:16,zIndex:500}}>
+        <div style={{position:"absolute",bottom:66,right:0,width:isMobile?"calc(100vw - 32px)":368,background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:22,boxShadow:"0 20px 60px rgba(0,0,0,0.12)",display:"flex",flexDirection:"column",maxHeight:isMobile?"75vh":540,overflow:"hidden",opacity:chatOpen?1:0,pointerEvents:chatOpen?"all":"none",transform:chatOpen?"translateY(0) scale(1)":"translateY(16px) scale(0.96)",transition:"all .22s cubic-bezier(.4,0,.2,1)"}}>
           <div style={{padding:"14px 16px",borderBottom:"1.5px solid #f9fafb",display:"flex",alignItems:"center",gap:10,flexShrink:0,background:"linear-gradient(135deg,#f0fdf4,#dcfce7)"}}>
             <div style={{width:38,height:38,background:"#111827",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,position:"relative"}}>
               🤖<div style={{position:"absolute",bottom:0,right:0,width:11,height:11,background:"#16a34a",borderRadius:"50%",border:"2.5px solid #f0fdf4"}}/>
