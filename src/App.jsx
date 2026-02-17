@@ -245,7 +245,7 @@ function LoginScreen({ onLogin }) {
 
         </div>
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900&family=Sora:wght@300;400;500;600;700;800&display=swap');@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}@keyframes toastIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}*{box-sizing:border-box;margin:0;padding:0;}input,button{outline:none;}body{overflow-x:hidden;}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900&family=Sora:wght@300;400;500;600;700;800&display=swap');@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}@keyframes toastIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}html,body,#root{width:100%;min-height:100vh;margin:0;padding:0;overflow-x:hidden;}*{box-sizing:border-box;}input,button{outline:none;}`}</style>
     </div>
   );
 }
@@ -288,7 +288,7 @@ function AdminDashboard({ onLogout }) {
   };
 
   return (
-    <div style={{fontFamily:"'Sora',system-ui,sans-serif",background:"#f9fafb",minHeight:"100vh",color:"#111827"}}>
+    <div style={{fontFamily:"'Sora',system-ui,sans-serif",background:"#f9fafb",minHeight:"100vh",color:"#111827",width:"100%"}}>
       {toast && <Toast msg={toast.msg} type={toast.type}/>}
 
       {/* Admin Topbar */}
@@ -336,7 +336,7 @@ function AdminDashboard({ onLogout }) {
         </div>}
       </header>
 
-      <div style={{padding:isMobile?"16px":"28px 32px",maxWidth:1200,margin:"0 auto"}}>
+      <div style={{padding:isMobile?"16px":"28px 32px",maxWidth:"100%",margin:"0 auto"}}>
 
         {/* OVERVIEW */}
         {page==="overview" && <>
@@ -740,7 +740,7 @@ function StudentDashboard({ onLogout }) {
   ];
 
   return (
-    <div style={{fontFamily:"'Sora',system-ui,sans-serif",background:"#f9fafb",minHeight:"100vh",color:"#111827"}}>
+    <div style={{fontFamily:"'Sora',system-ui,sans-serif",background:"#f9fafb",minHeight:"100vh",color:"#111827",width:"100%"}}>
       {toast&&<Toast msg={toast.msg} type={toast.type}/>}
 
       {/* Topbar */}
@@ -790,7 +790,7 @@ function StudentDashboard({ onLogout }) {
 
       {/* NOTIFICATIONS PAGE */}
       {page==="notifications"&&(
-        <div style={{maxWidth:680,margin:"36px auto",padding:"0 24px"}}>
+        <div style={{maxWidth:680,margin:"0 auto",padding:isMobile?"16px 14px 80px":"36px 24px"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:24}}>
             <h2 style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,letterSpacing:"-0.02em"}}>Notifications</h2>
             <button onClick={()=>setNotifs(p=>p.map(n=>({...n,read:true})))} style={{fontSize:12,color:"#16a34a",background:"none",border:"none",cursor:"pointer",fontWeight:600,fontFamily:"inherit"}}>Mark all read</button>
@@ -816,7 +816,7 @@ function StudentDashboard({ onLogout }) {
 
       {/* TIMELINE PAGE */}
       {page==="timeline"&&(
-        <div style={{maxWidth:560,margin:"36px auto",padding:"0 24px"}}>
+        <div style={{maxWidth:560,margin:"0 auto",padding:isMobile?"16px 14px 80px":"36px 24px"}}>
           <h2 style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,letterSpacing:"-0.02em",marginBottom:8}}>Onboarding Timeline</h2>
           <p style={{fontSize:13,color:"#6b7280",marginBottom:28}}>Your journey from admission to first day of classes</p>
           <div style={{position:"relative"}}>
@@ -1199,7 +1199,32 @@ function StudentDashboard({ onLogout }) {
 // ROOT
 // ═════════════════════════════════════════════════════════════════════════════
 export default function App() {
-  const [session, setSession] = useState(null); // null | "student" | "admin"
+  const [session, setSession] = useState(null);
+
+  // Inject viewport meta + global resets on mount
+  useEffect(() => {
+    // Viewport meta tag (critical for mobile)
+    if (!document.querySelector('meta[name="viewport"]')) {
+      const meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0';
+      document.head.appendChild(meta);
+    }
+    // Global CSS reset for full-width layout
+    const style = document.createElement('style');
+    style.textContent = `
+      html, body, #root {
+        width: 100%;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        box-sizing: border-box;
+      }
+      *, *::before, *::after { box-sizing: border-box; }
+    `;
+    document.head.appendChild(style);
+  }, []);
 
   if (!session) return <LoginScreen onLogin={role => setSession(role)} />;
   if (session === "admin") return <AdminDashboard onLogout={() => setSession(null)} />;
