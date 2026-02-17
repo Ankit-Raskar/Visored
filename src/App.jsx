@@ -104,8 +104,8 @@ function LoginScreen({ onLogin }) {
   return (
     <div style={{minHeight:"100vh",display:"grid",gridTemplateColumns:"1fr 1fr",fontFamily:"'Sora',system-ui,sans-serif"}}>
       {/* Left Panel */}
-      <div style={{background:"linear-gradient(160deg,#0f1a0f 0%,#0a2e1a 50%,#082215 100%)",
-        display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"48px 52px",
+      <div className="login-left-panel" style={{background:"linear-gradient(160deg,#0f1a0f 0%,#0a2e1a 50%,#082215 100%)",
+        display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"32px 28px",
         position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",inset:0,backgroundImage:"radial-gradient(circle at 20% 80%,rgba(22,163,74,0.12) 0%,transparent 60%),radial-gradient(circle at 80% 20%,rgba(22,163,74,0.08) 0%,transparent 50%)",pointerEvents:"none"}}/>
         <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px)",backgroundSize:"40px 40px",pointerEvents:"none"}}/>
@@ -235,7 +235,120 @@ function LoginScreen({ onLogin }) {
 
         </div>
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900&family=Sora:wght@300;400;500;600;700;800&display=swap');@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}@keyframes toastIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}*{box-sizing:border-box;}input,button{outline:none;}`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900&family=Sora:wght@300;400;500;600;700;800&display=swap');
+        @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+        @keyframes toastIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+        @keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+        @keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+        *{box-sizing:border-box;}
+        input,button{outline:none;}
+        
+        /* ── RESPONSIVE BREAKPOINTS ── */
+        @media (max-width: 1024px) {
+          /* Tablet adjustments */
+          [style*="gridTemplateColumns"] {
+            grid-template-columns: 220px 1fr !important;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          /* Mobile: Stack everything vertically */
+          [style*="gridTemplateColumns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+          }
+          
+          [style*="gridTemplateColumns: 280px 1fr"],
+          [style*="gridTemplateColumns: 264px 1fr"],
+          [style*="gridTemplateColumns: 268px 1fr"] {
+            grid-template-columns: 1fr !important;
+          }
+          
+          /* Hide left login panel on mobile, show stacked */
+          .login-left-panel {
+            display: none !important;
+          }
+          
+          /* Sidebar becomes bottom nav or hidden */
+          aside[style*="borderRight"] {
+            display: none;
+          }
+          
+          /* Full width main content */
+          main {
+            padding: 16px !important;
+            max-width: 100% !important;
+          }
+          
+          /* Responsive grids */
+          [style*="gridTemplateColumns: repeat(4,1fr)"],
+          [style*="gridTemplateColumns: repeat(5,1fr)"] {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 8px !important;
+          }
+          
+          [style*="gridTemplateColumns: 1fr 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+          }
+          
+          /* Mobile topbar */
+          header {
+            padding: 0 12px !important;
+            flex-wrap: wrap;
+          }
+          
+          /* Hide desktop-only elements on mobile */
+          .desktop-only {
+            display: none !important;
+          }
+          
+          /* Chat panel full width on mobile */
+          .chat-panel {
+            width: calc(100vw - 24px) !important;
+            right: 12px !important;
+            left: 12px !important;
+            max-height: 70vh !important;
+          }
+          
+          /* Smaller fonts for mobile */
+          h1, .greeting {
+            font-size: 22px !important;
+          }
+          
+          h2 {
+            font-size: 20px !important;
+          }
+          
+          /* Stack flex items */
+          [style*="display:flex"][style*="gap"] {
+            flex-wrap: wrap !important;
+          }
+          
+          /* Mobile tables scroll */
+          table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          /* Extra small mobile */
+          [style*="fontSize:26"],
+          [style*="fontSize:28"] {
+            font-size: 20px !important;
+          }
+          
+          [style*="gridTemplateColumns: repeat(2,1fr)"] {
+            grid-template-columns: 1fr !important;
+          }
+          
+          /* Single column layouts */
+          [style*="gridTemplateColumns: 280px 1fr"] {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
