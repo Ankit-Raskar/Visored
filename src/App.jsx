@@ -11,6 +11,70 @@ function useWindowWidth() {
 }
 
 
+// ─── ANIMATED NUMBER COUNTER ──────────────────────────────────────────────────
+function AnimatedNumber({ value, prefix="", suffix="", duration=900 }) {
+  const [display, setDisplay] = useState(0);
+  const startRef = useRef(null);
+  const frameRef = useRef(null);
+  useEffect(() => {
+    if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    const start = performance.now();
+    const from = 0;
+    const to = parseFloat(String(value).replace(/[^0-9.]/g,"")) || 0;
+    const step = (now) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      setDisplay(Math.round(from + (to - from) * ease));
+      if (progress < 1) frameRef.current = requestAnimationFrame(step);
+    };
+    frameRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [value]);
+  return <span>{prefix}{display.toLocaleString("en-IN")}{suffix}</span>;
+}
+
+// ─── DAYS REMAINING ───────────────────────────────────────────────────────────
+function Countdown({ targetDate }) {
+  const diff = new Date(targetDate) - new Date();
+  if (diff <= 0) return <span style={{color:"#dc2626",fontWeight:700,fontSize:28}}>Expired</span>;
+  const days = Math.ceil(diff / 86400000);
+  const urgent = days <= 3;
+  return (
+    <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+      <span style={{fontFamily:"'Fraunces',serif",fontSize:32,fontWeight:900,color: urgent ? "#dc2626" : "#111827",lineHeight:1}}>{days}</span>
+      <span style={{fontSize:18,fontWeight:600,color: urgent ? "#dc2626" : "#374151"}}>days</span>
+    </div>
+  );
+}
+
+// ─── SKELETON LOADER ─────────────────────────────────────────────────────────
+function Skeleton({ w="100%", h=16, r=8, mb=0 }) {
+  return <div style={{width:w,height:h,borderRadius:r,background:"linear-gradient(90deg,#f1f5f9 0%,#e2e8f0 40%,#f8fafc 60%,#f1f5f9 100%)",backgroundSize:"300% 100%",animation:"shimmer 1.7s ease-in-out infinite",marginBottom:mb}}/>;
+}
+
+function SkeletonDashboard() {
+  return (
+    <div style={{display:"flex",minHeight:"calc(100vh - 58px)"}}>
+      <aside style={{width:264,background:"#fff",borderRight:"1.5px solid #f3f4f6",padding:"22px 16px",flexShrink:0}}>
+        <Skeleton w="100%" h={160} r={14} mb={16}/>
+        <Skeleton w="60%" h={10} r={4} mb={12}/>
+        {[0,1,2,3].map(i=><Skeleton key={i} w="100%" h={40} r={10} mb={6}/>)}
+      </aside>
+      <main style={{flex:1,padding:"28px 32px"}}>
+        <Skeleton w="260px" h={32} r={8} mb={8}/>
+        <Skeleton w="340px" h={16} r={6} mb={24}/>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
+          {[0,1,2,3].map(i=><Skeleton key={i} w="100%" h={72} r={12}/>)}
+        </div>
+        <Skeleton w="100%" h={64} r={12} mb={12}/>
+        {[0,1,2,3].map(i=><Skeleton key={i} w="100%" h={64} r={14} mb={10}/>)}
+      </main>
+      <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+    </div>
+  );
+}
+
 // ─── CREDENTIALS ─────────────────────────────────────────────────────────────
 const USERS = {
   student: { id:"24ECE047", pass:"arjun2024", role:"student" },
@@ -60,13 +124,16 @@ const clr = (pct) => pct >= 80 ? "#16a34a" : pct >= 50 ? "#d97706" : "#dc2626";
 
 function ProgressRing({ pct, size=96, stroke=5.5, color="#16a34a" }) {
   const r=(size-stroke*2)/2, circ=2*Math.PI*r;
+  const [drawn, setDrawn] = useState(0);
+  // Defer to next frame so CSS transition fires every mount
+  useEffect(() => { const id = requestAnimationFrame(() => setDrawn(pct)); return () => cancelAnimationFrame(id); }, [pct]);
   return (
-    <svg width={size} height={size} style={{transform:"rotate(-90deg)",display:"block"}}>
+    <svg width={size} height={size} style={{transform:"rotate(-90deg)",display:"block",filter:`drop-shadow(0 0 5px ${color}55)`}}>
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e5e7eb" strokeWidth={stroke}/>
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color}
         strokeWidth={stroke} strokeLinecap="round"
-        strokeDasharray={circ} strokeDashoffset={circ-(pct/100)*circ}
-        style={{transition:"stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)"}}/>
+        strokeDasharray={circ} strokeDashoffset={circ-(drawn/100)*circ}
+        style={{transition:"stroke-dashoffset 1.1s cubic-bezier(.34,1.1,.64,1)"}}/>
     </svg>
   );
 }
@@ -78,7 +145,13 @@ function Badge({children,v="neutral"}) {
 
 function Toast({msg,type}) {
   const C={error:["#fef2f2","#dc2626"],info:["#eff6ff","#2563eb"],success:["#f0fdf4","#16a34a"]}[type||"success"];
-  return <div style={{position:"fixed",top:18,right:18,zIndex:9999,background:C[0],border:`1.5px solid ${C[1]}44`,color:C[1],padding:"11px 18px",borderRadius:12,fontSize:13,fontWeight:600,boxShadow:"0 8px 32px rgba(0,0,0,0.12)",display:"flex",alignItems:"center",gap:8,animation:"toastIn .25s ease"}}>{type==="error"?"✕":type==="info"?"ℹ":"✓"} {msg}</div>;
+  const icon=type==="error"?"✕":type==="info"?"i":"✓";
+  return (
+    <div style={{position:"fixed",top:18,right:18,zIndex:9999,background:C[0],border:`1.5px solid ${C[1]}44`,color:C[1],padding:"11px 18px 11px 12px",borderRadius:14,fontSize:13,fontWeight:600,boxShadow:`0 12px 36px rgba(0,0,0,.13),0 0 0 1px ${C[1]}18`,display:"flex",alignItems:"center",gap:10,animation:"toastIn .38s cubic-bezier(.34,1.56,.64,1) both"}}>
+      <div style={{width:22,height:22,borderRadius:"50%",background:C[1],color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,flexShrink:0}}>{icon}</div>
+      {msg}
+    </div>
+  );
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -121,53 +194,57 @@ function LoginScreen({ onLogin }) {
         <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px)",backgroundSize:"40px 40px",pointerEvents:"none"}}/>
 
         {/* Brand */}
-        <div style={{display:"flex",alignItems:"center",gap:12,position:"relative"}}>
-          <div style={{width:38,height:38,background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,boxShadow:"0 0 24px rgba(22,163,74,0.5)"}}>🎓</div>
+        <div style={{display:"flex",alignItems:"center",gap:12,position:"relative",animation:"slideL .55s cubic-bezier(.34,1.2,.64,1) both"}}>
+          <div style={{width:38,height:38,background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,animation:"breathe 2.8s ease-in-out infinite"}}>🎓</div>
           <span style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900,color:"#fff",letterSpacing:"-0.03em"}}>Visored</span>
         </div>
 
         {/* Hero text */}
         <div style={{position:"relative"}}>
-          <div style={{fontSize:11,fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase",color:"#4ade80",marginBottom:16}}>Smart Student Onboarding</div>
-          <h1 style={{fontFamily:"'Fraunces',serif",fontSize:42,fontWeight:900,color:"#fff",lineHeight:1.15,letterSpacing:"-0.03em",marginBottom:20}}>
+          <div style={{fontSize:11,fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase",color:"#4ade80",marginBottom:16,animation:"fadeUp .5s .1s both"}}>Smart Student Onboarding</div>
+          <h1 style={{fontFamily:"'Fraunces',serif",fontSize:42,fontWeight:900,color:"#fff",lineHeight:1.15,letterSpacing:"-0.03em",marginBottom:20,animation:"fadeUp .5s .17s both"}}>
             Your journey<br/>starts here.
           </h1>
-          <p style={{fontSize:14.5,color:"#86efac",lineHeight:1.7,maxWidth:340}}>
+          <p style={{fontSize:14.5,color:"#86efac",lineHeight:1.7,maxWidth:340,animation:"fadeUp .5s .24s both"}}>
             Visored guides every student through document verification, fees, course registration, mentoring and compliance — all in one intelligent platform.
           </p>
 
-          {/* Feature pills */}
+          {/* Feature pills — staggered */}
           <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:28}}>
-            {["📄 Document Verification","💳 Fee Tracking","📚 Course Registration","🎯 Mentoring","🤖 AI Assistant"].map(f=>(
-              <span key={f} style={{background:"rgba(22,163,74,0.15)",border:"1px solid rgba(22,163,74,0.3)",color:"#86efac",fontSize:12,fontWeight:500,padding:"6px 14px",borderRadius:20}}>{f}</span>
+            {["📄 Document Verification","💳 Fee Tracking","📚 Course Registration","🎯 Mentoring","🤖 AI Assistant"].map((f,i)=>(
+              <span key={f} style={{background:"rgba(22,163,74,0.15)",border:"1px solid rgba(22,163,74,0.3)",color:"#86efac",fontSize:12,fontWeight:500,padding:"6px 14px",borderRadius:20,display:"inline-block",animation:`fadeUp .4s ${.3+i*.07}s both`,transition:"background .18s,transform .18s"}}
+                onMouseEnter={e=>{e.currentTarget.style.background="rgba(22,163,74,.28)";e.currentTarget.style.transform="translateY(-2px)";}}
+                onMouseLeave={e=>{e.currentTarget.style.background="rgba(22,163,74,.15)";e.currentTarget.style.transform="translateY(0)";}}>{f}</span>
             ))}
           </div>
         </div>
 
         {/* Footer */}
-        <div style={{fontSize:12,color:"rgba(255,255,255,0.3)",position:"relative"}}>
+        <div style={{fontSize:12,color:"rgba(255,255,255,0.3)",position:"relative",animation:"fadeIn .6s .6s both"}}>
           SRM Institute of Science & Technology, Chennai · Batch 2024–28
         </div>
       </div>
 
       {/* Right Panel */}
       <div style={{background:"#f9fafb",display:"flex",alignItems:"center",justifyContent:"center",padding:isMobile?"32px 20px":"48px 52px",minHeight:isMobile?"100vh":"auto"}}>
-        <div style={{width:"100%",maxWidth:400,animation:"fadeUp .5s ease"}}>
+        <div style={{width:"100%",maxWidth:400,animation:"fadeUp .45s .05s both"}}>
 
           <h2 style={{fontFamily:"'Fraunces',serif",fontSize:28,fontWeight:700,color:"#111827",marginBottom:6,letterSpacing:"-0.02em"}}>
             Welcome back
           </h2>
           <p style={{fontSize:13.5,color:"#6b7280",marginBottom:28}}>Sign in to continue your onboarding</p>
 
-          {/* Tabs */}
+          {/* Tabs — spring active indicator */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",background:"#f3f4f6",borderRadius:12,padding:4,marginBottom:28}}>
             {["student","admin"].map(t=>(
               <button key={t} onClick={()=>{setTab(t);setId("");setPass("");setError("");}}
                 style={{padding:"10px",borderRadius:9,border:"none",cursor:"pointer",
-                  fontFamily:"inherit",fontSize:13.5,fontWeight:600,transition:"all .2s",
+                  fontFamily:"inherit",fontSize:13.5,fontWeight:600,
+                  transition:"all .28s cubic-bezier(.34,1.56,.64,1)",
                   background:tab===t?"#fff":"transparent",
                   color:tab===t?"#111827":"#9ca3af",
-                  boxShadow:tab===t?"0 2px 8px rgba(0,0,0,0.08)":"none"}}>
+                  boxShadow:tab===t?"0 2px 10px rgba(0,0,0,.1)":"none",
+                  transform:tab===t?"scale(1.03)":"scale(1)"}}>
                 {t==="student"?"🎓 Student":"🛡️ Admin"}
               </button>
             ))}
@@ -184,9 +261,9 @@ function LoginScreen({ onLogin }) {
                 placeholder={hints[tab].ph}
                 style={{width:"100%",padding:"11px 14px",border:`1.5px solid ${error?"#fca5a5":"#e5e7eb"}`,
                   borderRadius:10,fontSize:13.5,fontFamily:"inherit",color:"#111827",
-                  background:"#fff",outline:"none",transition:"border-color .15s"}}
-                onFocus={e=>e.target.style.borderColor="#86efac"}
-                onBlur={e=>e.target.style.borderColor=error?"#fca5a5":"#e5e7eb"}/>
+                  background:"#fff",outline:"none",transition:"border-color .18s,box-shadow .18s"}}
+                onFocus={e=>{e.target.style.borderColor="#16a34a";e.target.style.boxShadow="0 0 0 3px rgba(22,163,74,.12)";}}
+                onBlur={e=>{e.target.style.borderColor=error?"#fca5a5":"#e5e7eb";e.target.style.boxShadow="none";}}/>
             </div>
             <div>
               <label style={{fontSize:12.5,fontWeight:600,color:"#374151",display:"block",marginBottom:6}}>Password</label>
@@ -197,12 +274,14 @@ function LoginScreen({ onLogin }) {
                   placeholder="Enter your password"
                   style={{width:"100%",padding:"11px 42px 11px 14px",border:`1.5px solid ${error?"#fca5a5":"#e5e7eb"}`,
                     borderRadius:10,fontSize:13.5,fontFamily:"inherit",color:"#111827",
-                    background:"#fff",outline:"none",transition:"border-color .15s"}}
-                  onFocus={e=>e.target.style.borderColor="#86efac"}
-                  onBlur={e=>e.target.style.borderColor=error?"#fca5a5":"#e5e7eb"}/>
+                    background:"#fff",outline:"none",transition:"border-color .18s,box-shadow .18s"}}
+                  onFocus={e=>{e.target.style.borderColor="#16a34a";e.target.style.boxShadow="0 0 0 3px rgba(22,163,74,.12)";}}
+                  onBlur={e=>{e.target.style.borderColor=error?"#fca5a5":"#e5e7eb";e.target.style.boxShadow="none";}}/>
                 <button onClick={()=>setShow(!showPass)}
                   style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",
-                    background:"none",border:"none",cursor:"pointer",color:"#9ca3af",fontSize:16}}>
+                    background:"none",border:"none",cursor:"pointer",color:"#9ca3af",fontSize:16,transition:"color .15s"}}
+                  onMouseEnter={e=>e.currentTarget.style.color="#374151"}
+                  onMouseLeave={e=>e.currentTarget.style.color="#9ca3af"}>
                   {showPass?"🙈":"👁"}
                 </button>
               </div>
@@ -210,7 +289,7 @@ function LoginScreen({ onLogin }) {
 
             {error && (
               <div style={{background:"#fef2f2",border:"1.5px solid #fca5a5",borderRadius:9,
-                padding:"10px 14px",fontSize:12.5,color:"#dc2626",fontWeight:500}}>
+                padding:"10px 14px",fontSize:12.5,color:"#dc2626",fontWeight:500,animation:"springUp .35s both"}}>
                 ⚠ {error}
               </div>
             )}
@@ -219,9 +298,14 @@ function LoginScreen({ onLogin }) {
               style={{padding:"13px",borderRadius:11,border:"none",cursor:loading||!id||!pass?"not-allowed":"pointer",
                 background:loading||!id||!pass?"#d1d5db":"linear-gradient(135deg,#16a34a,#15803d)",
                 color:loading||!id||!pass?"#9ca3af":"#fff",fontSize:14,fontWeight:700,
-                fontFamily:"inherit",transition:"all .2s",
-                boxShadow:loading||!id||!pass?"none":"0 4px 16px rgba(22,163,74,0.35)"}}>
-              {loading ? "Signing in…" : `Sign in as ${tab==="student"?"Student":"Admin"} →`}
+                fontFamily:"inherit",transition:"box-shadow .2s,background .2s",
+                boxShadow:loading||!id||!pass?"none":"0 4px 18px rgba(22,163,74,.38)"}}>
+              {loading
+                ? <span style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                    <span style={{width:14,height:14,border:"2px solid rgba(255,255,255,.4)",borderTopColor:"#fff",borderRadius:"50%",display:"inline-block",animation:"spin .7s linear infinite"}}/>
+                    Signing in…
+                  </span>
+                : `Sign in as ${tab==="student"?"Student":"Admin"} →`}
             </button>
           </div>
 
@@ -245,7 +329,57 @@ function LoginScreen({ onLogin }) {
 
         </div>
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900&family=Sora:wght@300;400;500;600;700;800&display=swap');@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}@keyframes toastIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}html,body,#root{width:100%;min-height:100vh;margin:0;padding:0;overflow-x:hidden;}*{box-sizing:border-box;}input,button{outline:none;}`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900&family=Sora:wght@300;400;500;600;700;800&display=swap');
+
+        /* ── Entrances ── */
+        @keyframes fadeUp   { from{opacity:0;transform:translateY(18px) scale(.98)} to{opacity:1;transform:none} }
+        @keyframes fadeIn   { from{opacity:0} to{opacity:1} }
+        @keyframes slideL   { from{opacity:0;transform:translateX(-22px)} to{opacity:1;transform:none} }
+        /* spring: overshoot then settle */
+        @keyframes springUp { 0%{opacity:0;transform:translateY(14px) scale(.94)}
+                              55%{opacity:1;transform:translateY(-3px) scale(1.02)}
+                              78%{transform:translateY(1px) scale(.99)}
+                              100%{transform:none} }
+        /* toast from right with spring */
+        @keyframes toastIn  { from{opacity:0;transform:translateX(60px) scale(.88)}
+                              to{opacity:1;transform:none} }
+        /* chat message pop */
+        @keyframes msgIn    { from{opacity:0;transform:translateY(8px) scale(.96)}
+                              to{opacity:1;transform:none} }
+        /* typing dots */
+        @keyframes bounce   { 0%,60%,100%{transform:translateY(0);opacity:.3}
+                              30%{transform:translateY(-6px);opacity:1} }
+        /* skeleton shimmer */
+        @keyframes shimmer  { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        /* logo breathe */
+        @keyframes breathe  { 0%,100%{box-shadow:0 0 18px rgba(22,163,74,.45)}
+                              50%{box-shadow:0 0 34px rgba(22,163,74,.8)} }
+        /* spinner */
+        @keyframes spin     { to{transform:rotate(360deg)} }
+        /* page-level entry */
+        @keyframes pageIn   { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+        @keyframes voicePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.7;transform:scale(1.12)} }
+
+        /* ── Micro-interactions (global) ── */
+        button { transition: transform .13s cubic-bezier(.34,1.56,.64,1), opacity .13s !important; }
+        button:active:not(:disabled) { transform: scale(.93) !important; }
+
+        /* card hover lift helper */
+        .lift:hover { transform: translateY(-3px) !important;
+                      box-shadow: 0 10px 28px rgba(0,0,0,.09) !important; }
+        .lift { transition: transform .2s cubic-bezier(.4,0,.2,1),
+                            box-shadow .2s cubic-bezier(.4,0,.2,1) !important; }
+
+        /* smooth thin scrollbar */
+        ::-webkit-scrollbar       { width:4px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:#e2e8f0; border-radius:99px; }
+
+        html,body,#root { width:100%;min-height:100vh;margin:0;padding:0;overflow-x:hidden; }
+        * { box-sizing:border-box; }
+        input,button { outline:none; }
+      `}</style>
     </div>
   );
 }
@@ -253,7 +387,7 @@ function LoginScreen({ onLogin }) {
 // ═════════════════════════════════════════════════════════════════════════════
 // ADMIN DASHBOARD
 // ═════════════════════════════════════════════════════════════════════════════
-function AdminDashboard({ onLogout }) {
+function AdminDashboard({ onLogout, dark, setDark }) {
   const isMobile = useWindowWidth() < 768;
   const [page, setPage]       = useState("overview");
   const [mobileNav, setMobileNav] = useState(false);
@@ -262,6 +396,10 @@ function AdminDashboard({ onLogout }) {
   const [filter, setFilter]   = useState("all");
   const [toast, setToast]     = useState(null);
   const [sendingId, setSendId]= useState(null);
+  const [aiInsight, setAiInsight] = useState(null);
+  const [insightLoading, setInsightLoad] = useState(false);
+  const [emailDraft, setEmailDraft] = useState(null);
+  const [emailLoading, setEmailLoad] = useState(null);
 
   const showToast = (msg, type="success") => { setToast({msg,type}); setTimeout(()=>setToast(null),3000); };
 
@@ -282,13 +420,48 @@ function AdminDashboard({ onLogout }) {
     avgProgress: Math.round(STUDENTS_DB.reduce((a,s)=>a+s.status,0)/STUDENTS_DB.length),
   };
 
+  const generateInsight = () => {
+    setInsightLoad(true);
+    setTimeout(() => {
+      const atRisk = STUDENTS_DB.filter(s=>s.status<50||!s.fees);
+      const insight = `🔍 **AI Batch Analysis — Feb 2026**\n\n**At-Risk Students (${atRisk.length}):** ${atRisk.map(s=>s.name).join(", ")} — these students have below 50% progress or unpaid fees and are at risk of missing the March 3 deadline.\n\n**Bottleneck Identified:** Document verification is the biggest blocker — ${STUDENTS_DB.filter(s=>s.docs<9).length} students still have incomplete docs. Recommend a WhatsApp broadcast reminder today.\n\n**Prediction:** At current pace, ${STUDENTS_DB.filter(s=>s.status>=80).length} students will complete onboarding before Mar 3. Consider scheduling a walk-in helpdesk session for students below 50%.\n\n**Recommended Action:** Send targeted reminders to Aman Singh & Divya Krishnan immediately — they have 0 courses registered and may be disengaged.`;
+      setAiInsight(insight);
+      setInsightLoad(false);
+    }, 2000);
+  };
+
+  const generateEmailDraft = (student) => {
+    setEmailLoad(student.id);
+    setTimeout(() => {
+      const issues = [];
+      if (student.docs < 9) issues.push(`${9-student.docs} document(s) still missing (deadline: Feb 20)`);
+      if (!student.fees) issues.push("fee payment pending");
+      if (student.courses === 0) issues.push("course registration not started (deadline: Feb 23)");
+      if (student.compliance < 5) issues.push(`${5-student.compliance} compliance module(s) incomplete`);
+      const draft = {
+        to: student.email,
+        subject: `[URGENT] Action Required: Complete Your Onboarding — ${student.name} (${student.roll})`,
+        body: `Dear ${student.name},\n\nThis is a friendly reminder from the Registrar's Office, SRM Institute of Science & Technology.\n\nYour current onboarding progress is ${student.status}%, and the following items require your immediate attention:\n\n${issues.map((x,i)=>`${i+1}. ${x.charAt(0).toUpperCase()+x.slice(1)}`).join("\n")}\n\nPlease log in to the Visored portal and complete these steps as soon as possible. Classes begin on March 3, 2026, and incomplete onboarding may affect your enrollment status.\n\nIf you need assistance, contact us at helpdesk@srm.edu.in or call Ext. 1800 (Mon–Sat, 9AM–6PM).\n\nWarm regards,\nRegistrar's Office\nSRM Institute of Science & Technology`,
+      };
+      setEmailDraft(draft);
+      setEmailLoad(null);
+    }, 1600);
+  };
+
   const sendReminder = (id) => {
     setSendId(id);
     setTimeout(()=>{ setSendId(null); showToast("Reminder sent successfully!"); },1200);
   };
 
+  const dm   = dark;
+  const abg  = dm ? "#0f172a" : "#f9fafb";
+  const asurf= dm ? "#1e293b" : "#fff";
+  const abdr = dm ? "#334155" : "#f3f4f6";
+  const atx1 = dm ? "#f1f5f9" : "#111827";
+  const atx2 = dm ? "#94a3b8" : "#6b7280";
+
   return (
-    <div style={{fontFamily:"'Sora',system-ui,sans-serif",background:"#f9fafb",minHeight:"100vh",color:"#111827",width:"100%"}}>
+    <div style={{fontFamily:"'Sora',system-ui,sans-serif",background:abg,minHeight:"100vh",color:atx1,width:"100%",transition:"background .35s,color .35s"}}>
       {toast && <Toast msg={toast.msg} type={toast.type}/>}
 
       {/* Admin Topbar */}
@@ -325,6 +498,10 @@ function AdminDashboard({ onLogout }) {
         )}
         {!isMobile && <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:12,paddingRight:24}}>
           <div style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>Dr. Admin · Registrar's Office</div>
+          <button onClick={()=>setDark(d=>!d)} title={dark?"Light mode":"Dark mode"}
+            style={{width:34,height:34,borderRadius:9,border:"1.5px solid rgba(255,255,255,0.2)",background:"transparent",color:"rgba(255,255,255,0.8)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>
+            {dark?"☀️":"🌙"}
+          </button>
           <button onClick={onLogout}
             style={{padding:"7px 16px",borderRadius:9,border:"1.5px solid rgba(255,255,255,0.2)",
               background:"transparent",color:"rgba(255,255,255,0.7)",fontSize:12,fontWeight:600,
@@ -342,41 +519,39 @@ function AdminDashboard({ onLogout }) {
         {page==="overview" && <>
           <div style={{marginBottom:24}}>
             <h2 style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,letterSpacing:"-0.02em",marginBottom:4}}>Admin Overview</h2>
-            <p style={{fontSize:13.5,color:"#6b7280"}}>Batch 2024–28 onboarding status · {new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"})}</p>
+            <p style={{fontSize:13.5,color:atx2}}>Batch 2024–28 onboarding status · {new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"})}</p>
           </div>
-          {/* Stat cards */}
+          {/* Stat cards — animated counters */}
           <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(5,1fr)",gap:12,marginBottom:28}}>
             {[
-              ["👥",stats.total,"Total Students","#f0fdf4","#16a34a"],
-              ["✅",stats.complete,"Fully Onboarded","#f0fdf4","#16a34a"],
-              ["⏳",stats.total-stats.complete-stats.pending,"In Progress","#fefce8","#d97706"],
-              ["🔴",stats.pending,"Below 50%","#fef2f2","#dc2626"],
-              ["💳",stats.feesPending,"Fees Pending","#fef2f2","#dc2626"],
-            ].map(([icon,val,label,bg,col])=>(
-              <div key={label} style={{background:bg,border:`1.5px solid ${col}22`,borderRadius:13,padding:"16px 18px",transition:"transform .15s"}}
-                onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
-                onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
+              ["👥",stats.total,"Total Students",dm?"#1e3a2e":"#f0fdf4","#16a34a"],
+              ["✅",stats.complete,"Fully Onboarded",dm?"#1e3a2e":"#f0fdf4","#16a34a"],
+              ["⏳",stats.total-stats.complete-stats.pending,"In Progress",dm?"#2e2a00":"#fefce8","#d97706"],
+              ["🔴",stats.pending,"Below 50%",dm?"#3a1a1a":"#fef2f2","#dc2626"],
+              ["💳",stats.feesPending,"Fees Pending",dm?"#3a1a1a":"#fef2f2","#dc2626"],
+            ].map(([icon,val,label,bg,col],i)=>(
+              <div key={label} className="lift" style={{background:bg,border:`1.5px solid ${col}22`,borderRadius:13,padding:"16px 18px",transition:"background .35s",animation:`springUp .5s ${i*.07}s both`}}>
                 <div style={{fontSize:22,marginBottom:6}}>{icon}</div>
-                <div style={{fontFamily:"'Fraunces',serif",fontSize:28,fontWeight:700,color:col,lineHeight:1}}>{val}</div>
-                <div style={{fontSize:11.5,color:"#6b7280",marginTop:4,fontWeight:500}}>{label}</div>
+                <div style={{fontFamily:"'Fraunces',serif",fontSize:28,fontWeight:700,color:col,lineHeight:1}}><AnimatedNumber value={val} duration={900}/></div>
+                <div style={{fontSize:11.5,color:atx2,marginTop:4,fontWeight:500}}>{label}</div>
               </div>
             ))}
           </div>
 
           {/* Average progress */}
-          <div style={{background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:14,padding:"20px 24px",marginBottom:24}}>
+          <div style={{background:asurf,border:`1.5px solid ${abdr}`,borderRadius:14,padding:"20px 24px",marginBottom:24,transition:"background .35s"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
               <div>
-                <div style={{fontSize:15,fontWeight:700,marginBottom:2}}>Batch Onboarding Progress</div>
-                <div style={{fontSize:12.5,color:"#6b7280"}}>Average completion across all {stats.total} students</div>
+                <div style={{fontSize:15,fontWeight:700,marginBottom:2,color:atx1}}>Batch Onboarding Progress</div>
+                <div style={{fontSize:12.5,color:atx2}}>Average completion across all {stats.total} students</div>
               </div>
-              <div style={{fontFamily:"'Fraunces',serif",fontSize:36,fontWeight:700,color:clr(stats.avgProgress)}}>{stats.avgProgress}%</div>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:36,fontWeight:700,color:clr(stats.avgProgress)}}><AnimatedNumber value={stats.avgProgress} suffix="%" duration={1000}/></div>
             </div>
-            <div style={{height:10,background:"#f3f4f6",borderRadius:5,overflow:"hidden"}}>
+            <div style={{height:10,background:abdr,borderRadius:5,overflow:"hidden"}}>
               <div style={{height:"100%",width:`${stats.avgProgress}%`,borderRadius:5,
                 background:`linear-gradient(90deg,#16a34a,#22c55e)`,transition:"width 1s ease"}}/>
             </div>
-            <div style={{display:"flex",justifyContent:"space-between",marginTop:10,fontSize:12,color:"#9ca3af"}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginTop:10,fontSize:12,color:atx2}}>
               <span>0%</span><span>Target: 100% by Mar 3</span><span>100%</span>
             </div>
           </div>
@@ -485,15 +660,26 @@ function AdminDashboard({ onLogout }) {
                     <td style={{padding:"13px 16px"}}><Badge v={s.fees?"green":"red"}>{s.fees?"✓ Paid":"Pending"}</Badge></td>
                     <td style={{padding:"13px 16px"}}><Badge v={s.courses===19?"green":s.courses>0?"amber":"red"}>{s.courses}/19 cr</Badge></td>
                     <td style={{padding:"13px 16px"}} onClick={e=>e.stopPropagation()}>
+                      <div style={{display:"flex",gap:5}}>
                       <button onClick={()=>sendReminder(s.id)} disabled={sendingId===s.id}
-                        style={{padding:"5px 12px",borderRadius:7,border:"1.5px solid #e5e7eb",
-                          background:sendingId===s.id?"#f3f4f6":"#fff",color:"#374151",fontSize:11.5,
+                        style={{padding:"5px 10px",borderRadius:7,border:"1.5px solid #e5e7eb",
+                          background:sendingId===s.id?"#f3f4f6":"#fff",color:"#374151",fontSize:11,
                           fontWeight:600,cursor:sendingId===s.id?"wait":"pointer",fontFamily:"inherit",
                           transition:"all .15s",whiteSpace:"nowrap"}}
                         onMouseEnter={e=>{if(sendingId!==s.id){e.currentTarget.style.borderColor="#16a34a";e.currentTarget.style.color="#16a34a";}}}
                         onMouseLeave={e=>{e.currentTarget.style.borderColor="#e5e7eb";e.currentTarget.style.color="#374151";}}>
                         {sendingId===s.id?"Sending…":"📧 Remind"}
                       </button>
+                      <button onClick={()=>generateEmailDraft(s)} disabled={emailLoading===s.id}
+                        style={{padding:"5px 10px",borderRadius:7,border:"1.5px solid #e5e7eb",
+                          background:emailLoading===s.id?"#f3f4f6":"#fff",color:"#6d28d9",fontSize:11,
+                          fontWeight:600,cursor:"pointer",fontFamily:"inherit",
+                          transition:"all .15s",whiteSpace:"nowrap",borderColor:"#ede9fe"}}
+                        onMouseEnter={e=>{e.currentTarget.style.background="#ede9fe";}}
+                        onMouseLeave={e=>{e.currentTarget.style.background="#fff";}}>
+                        {emailLoading===s.id?"Writing…":"✨ AI Email"}
+                      </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -583,25 +769,59 @@ function AdminDashboard({ onLogout }) {
         {/* ANALYTICS */}
         {page==="analytics" && (
           <div>
-            <h2 style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,letterSpacing:"-0.02em",marginBottom:20}}>Analytics</h2>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:12}}>
+              <h2 style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,letterSpacing:"-0.02em"}}>Analytics</h2>
+              <button onClick={generateInsight} disabled={insightLoading}
+                style={{padding:"10px 20px",borderRadius:10,border:"none",background:insightLoading?"#e5e7eb":"linear-gradient(135deg,#6d28d9,#7c3aed)",color:insightLoading?"#9ca3af":"#fff",fontSize:13,fontWeight:700,cursor:insightLoading?"wait":"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8,boxShadow:"0 4px 16px rgba(109,40,217,0.35)"}}>
+                {insightLoading?<>⏳ Analyzing batch data…</>:<>✨ Generate AI Insight</>}
+              </button>
+            </div>
+
+            {/* AI Insight Panel */}
+            {aiInsight && (
+              <div style={{background:"linear-gradient(135deg,#faf5ff,#ede9fe)",border:"1.5px solid #c4b5fd",borderRadius:14,padding:"20px 22px",marginBottom:20,animation:"fadeUp .4s ease",position:"relative"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+                  <div style={{width:32,height:32,background:"linear-gradient(135deg,#6d28d9,#7c3aed)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🤖</div>
+                  <div style={{fontSize:14,fontWeight:700,color:"#4c1d95"}}>AI Batch Intelligence Report</div>
+                  <button onClick={()=>setAiInsight(null)} style={{marginLeft:"auto",background:"none",border:"none",cursor:"pointer",color:"#9ca3af",fontSize:18,lineHeight:1}}>×</button>
+                </div>
+                <div style={{fontSize:13,color:"#374151",lineHeight:1.7}} dangerouslySetInnerHTML={{__html:aiInsight.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br/>")}}/>
+              </div>
+            )}
+
             <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:20}}>
 
-              {/* Branch breakdown */}
+              {/* Branch breakdown — visual bar chart */}
               <div style={{background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:14,padding:"20px 22px"}}>
                 <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>Progress by Branch</div>
-                <div style={{fontSize:12,color:"#6b7280",marginBottom:16}}>Average onboarding completion</div>
-                {["ECE","CSE","ME","CE","EEE"].map(branch=>{
+                <div style={{fontSize:12,color:"#6b7280",marginBottom:20}}>Average onboarding completion per department</div>
+                {/* Visual bar chart */}
+                <div style={{display:"flex",alignItems:"flex-end",gap:12,height:140,marginBottom:12,padding:"0 4px"}}>
+                  {["ECE","CSE","ME","CE","EEE"].map((branch,i)=>{
+                    const branchStudents = STUDENTS_DB.filter(s=>s.branch===branch);
+                    const avg = branchStudents.length ? Math.round(branchStudents.reduce((a,s)=>a+s.status,0)/branchStudents.length) : 0;
+                    const colors = ["#16a34a","#2563eb","#7c3aed","#d97706","#dc2626"];
+                    return (
+                      <div key={branch} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                        <div style={{fontSize:11,fontWeight:700,color:colors[i]}}>{avg}%</div>
+                        <div style={{width:"100%",height:Math.max(8,avg*1.2),background:colors[i],borderRadius:"6px 6px 0 0",transition:"height 1s ease",opacity:0.85}}/>
+                        <div style={{fontSize:11,fontWeight:600,color:"#374151"}}>{branch}</div>
+                        <div style={{fontSize:10,color:"#9ca3af"}}>{branchStudents.length}s</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{height:1,background:"#f3f4f6",marginBottom:12}}/>
+                {["ECE","CSE","ME","CE","EEE"].map((branch)=>{
                   const branchStudents = STUDENTS_DB.filter(s=>s.branch===branch);
                   const avg = branchStudents.length ? Math.round(branchStudents.reduce((a,s)=>a+s.status,0)/branchStudents.length) : 0;
                   return (
-                    <div key={branch} style={{marginBottom:14}}>
-                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-                        <span style={{fontSize:13,fontWeight:600,color:"#374151"}}>{branch}</span>
-                        <span style={{fontSize:12,fontWeight:700,color:clr(avg)}}>{avg}% avg · {branchStudents.length} students</span>
+                    <div key={branch} style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                      <span style={{fontSize:11.5,fontWeight:600,color:"#374151",width:32}}>{branch}</span>
+                      <div style={{flex:1,height:5,background:"#f3f4f6",borderRadius:3,overflow:"hidden"}}>
+                        <div style={{height:"100%",width:`${avg}%`,background:clr(avg),borderRadius:3,transition:"width 1s ease"}}/>
                       </div>
-                      <div style={{height:7,background:"#f3f4f6",borderRadius:4,overflow:"hidden"}}>
-                        <div style={{height:"100%",width:`${avg}%`,background:clr(avg),borderRadius:4,transition:"width 1s ease"}}/>
-                      </div>
+                      <Badge v={avg>=80?"green":avg>=50?"amber":"red"}>{avg}%</Badge>
                     </div>
                   );
                 })}
@@ -617,13 +837,18 @@ function AdminDashboard({ onLogout }) {
                   ["📚","Courses",Math.round(STUDENTS_DB.filter(s=>s.courses===19).length/STUDENTS_DB.length*100)],
                   ["🎯","Compliance",Math.round(STUDENTS_DB.filter(s=>s.compliance===5).length/STUDENTS_DB.length*100)],
                 ].map(([icon,label,pct])=>(
-                  <div key={label} style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
-                    <span style={{fontSize:18,width:24,textAlign:"center"}}>{icon}</span>
-                    <span style={{fontSize:13,fontWeight:600,color:"#374151",width:100}}>{label}</span>
-                    <div style={{flex:1,height:7,background:"#f3f4f6",borderRadius:4,overflow:"hidden"}}>
-                      <div style={{height:"100%",width:`${pct}%`,background:clr(pct),borderRadius:4,transition:"width 1s ease"}}/>
+                  <div key={label} style={{display:"flex",alignItems:"center",gap:14,marginBottom:18}}>
+                    <span style={{fontSize:20,width:28,textAlign:"center"}}>{icon}</span>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                        <span style={{fontSize:13,fontWeight:600,color:"#374151"}}>{label}</span>
+                        <span style={{fontSize:12,fontWeight:700,color:clr(pct)}}>{pct}%</span>
+                      </div>
+                      <div style={{height:8,background:"#f3f4f6",borderRadius:4,overflow:"hidden"}}>
+                        <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${clr(pct)},${clr(pct)}aa)`,borderRadius:4,transition:"width 1s ease"}}/>
+                      </div>
+                      <div style={{fontSize:11,color:"#9ca3af",marginTop:3}}>{Math.round(STUDENTS_DB.length*pct/100)}/{STUDENTS_DB.length} students complete</div>
                     </div>
-                    <span style={{fontSize:12,fontWeight:700,color:clr(pct),width:36,textAlign:"right"}}>{pct}%</span>
                   </div>
                 ))}
               </div>
@@ -655,17 +880,52 @@ function AdminDashboard({ onLogout }) {
                         <div style={{fontSize:11.5,color:"#6b7280"}}>{s.roll} · {s.branch} · {!s.fees?"Fees unpaid · ":""}{s.docs<9?`${9-s.docs} docs missing`:"Docs OK"}</div>
                       </div>
                       <Badge v="red">{s.status}%</Badge>
-                      <button onClick={()=>sendReminder(s.id)}
-                        style={{padding:"6px 14px",borderRadius:8,border:"1.5px solid #fca5a5",
-                          background:"#fff",color:"#dc2626",fontSize:12,fontWeight:600,
-                          cursor:"pointer",fontFamily:"inherit"}}>
-                        📧 Remind
+                      <button onClick={()=>generateEmailDraft(s)} disabled={emailLoading===s.id}
+                        style={{padding:"6px 12px",borderRadius:8,border:"1.5px solid #ede9fe",
+                          background:"#fff",color:"#6d28d9",fontSize:12,fontWeight:600,
+                          cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+                        {emailLoading===s.id?"Writing…":"✨ AI Email"}
                       </button>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
+
+            {/* Email Draft Modal */}
+            {emailDraft && (
+              <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:9000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setEmailDraft(null)}>
+                <div style={{background:"#fff",borderRadius:16,width:"100%",maxWidth:600,maxHeight:"85vh",overflow:"auto",boxShadow:"0 24px 80px rgba(0,0,0,0.2)",animation:"fadeUp .3s ease"}} onClick={e=>e.stopPropagation()}>
+                  <div style={{padding:"20px 22px",borderBottom:"1.5px solid #f3f4f6",display:"flex",alignItems:"center",gap:12}}>
+                    <div style={{width:36,height:36,background:"linear-gradient(135deg,#6d28d9,#7c3aed)",borderRadius:9,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>✨</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:15,fontWeight:700,color:"#111827"}}>AI-Generated Email Draft</div>
+                      <div style={{fontSize:12,color:"#6b7280"}}>Personalized for this student's specific pending tasks</div>
+                    </div>
+                    <button onClick={()=>setEmailDraft(null)} style={{background:"none",border:"none",cursor:"pointer",color:"#9ca3af",fontSize:22,lineHeight:1}}>×</button>
+                  </div>
+                  <div style={{padding:"20px 22px"}}>
+                    <div style={{marginBottom:12}}>
+                      <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.07em",textTransform:"uppercase",color:"#9ca3af",marginBottom:4}}>To</div>
+                      <div style={{fontSize:13,color:"#374151",background:"#f9fafb",padding:"8px 12px",borderRadius:8}}>{emailDraft.to}</div>
+                    </div>
+                    <div style={{marginBottom:12}}>
+                      <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.07em",textTransform:"uppercase",color:"#9ca3af",marginBottom:4}}>Subject</div>
+                      <div style={{fontSize:13,color:"#374151",background:"#f9fafb",padding:"8px 12px",borderRadius:8,fontWeight:600}}>{emailDraft.subject}</div>
+                    </div>
+                    <div style={{marginBottom:16}}>
+                      <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.07em",textTransform:"uppercase",color:"#9ca3af",marginBottom:4}}>Body</div>
+                      <textarea readOnly value={emailDraft.body} style={{width:"100%",height:240,padding:"12px",border:"1.5px solid #e5e7eb",borderRadius:10,fontSize:13,fontFamily:"inherit",color:"#374151",lineHeight:1.6,resize:"none",background:"#f9fafb"}}/>
+                    </div>
+                    <div style={{display:"flex",gap:10}}>
+                      <button onClick={()=>{showToast("Email sent successfully!","success");setEmailDraft(null);}} style={{flex:1,padding:"11px",borderRadius:10,border:"none",background:"#16a34a",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>📧 Send Email</button>
+                      <button onClick={()=>{navigator.clipboard?.writeText(emailDraft.body);showToast("Copied to clipboard!","info");}} style={{padding:"11px 18px",borderRadius:10,border:"1.5px solid #e5e7eb",background:"#fff",color:"#374151",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>📋 Copy</button>
+                      <button onClick={()=>setEmailDraft(null)} style={{padding:"11px 18px",borderRadius:10,border:"1.5px solid #e5e7eb",background:"#fff",color:"#6b7280",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Discard</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -676,7 +936,7 @@ function AdminDashboard({ onLogout }) {
 // ═════════════════════════════════════════════════════════════════════════════
 // STUDENT DASHBOARD (preserved from previous version)
 // ═════════════════════════════════════════════════════════════════════════════
-function StudentDashboard({ onLogout }) {
+function StudentDashboard({ onLogout, dark, setDark }) {
   const isMobile = useWindowWidth() < 768;
   const [page,setPage]           = useState("dashboard");
   const [mobileNav,setMobileNav] = useState(false);
@@ -693,10 +953,39 @@ function StudentDashboard({ onLogout }) {
   const [uploading,setUploading] = useState(null);
   const [notifs,setNotifs]       = useState([{id:1,read:false,icon:"⚠️",title:"Document deadline approaching",sub:"Transfer Certificate due in 3 days",time:"2h ago"},{id:2,read:false,icon:"📅",title:"Course registration closes soon",sub:"Feb 23 · Only 6 days left",time:"5h ago"},{id:3,read:true,icon:"✅",title:"Fee payment confirmed",sub:"₹1,88,500 · Ref TXN-2024-47891",time:"Jan 9"},{id:4,read:true,icon:"🏠",title:"Hostel allotted",sub:"Block A, Room 214",time:"Jan 12"},{id:5,read:true,icon:"👩‍🏫",title:"Mentor assigned",sub:"Dr. Priya Menon · First meet Feb 25",time:"Jan 15"}]);
   const msgsRef = useRef(null);
+  const [voiceSpeaking,setVoiceSpeaking] = useState(false);
+  const synthRef = useRef(typeof window!=="undefined"?window.speechSynthesis:null);
+
+  // Stop AI speech
+  const stopSpeech = useCallback(()=>{
+    if(synthRef.current){ synthRef.current.cancel(); }
+    setVoiceSpeaking(false);
+  },[]);
+
+  // Speak AI reply aloud
+  const speakReply = useCallback((text)=>{
+    if(!synthRef.current) return;
+    stopSpeech();
+    const clean = text.replace(/\*\*(.*?)\*\*/g,"$1").replace(/•/g,"").replace(/\n/g," ");
+    const utter = new SpeechSynthesisUtterance(clean);
+    utter.lang  = "en-IN";
+    utter.rate  = 1.05;
+    utter.pitch = 1;
+    const voices    = synthRef.current.getVoices();
+    const preferred = voices.find(v=>v.lang.startsWith("en")&&v.name.toLowerCase().includes("female"))
+                   || voices.find(v=>v.lang.startsWith("en-IN"))
+                   || voices.find(v=>v.lang.startsWith("en"));
+    if(preferred) utter.voice = preferred;
+    utter.onstart = ()=>setVoiceSpeaking(true);
+    utter.onend   = ()=>setVoiceSpeaking(false);
+    utter.onerror = ()=>setVoiceSpeaking(false);
+    synthRef.current.speak(utter);
+  },[stopSpeech]);
 
   useEffect(()=>{if(msgsRef.current)msgsRef.current.scrollTop=msgsRef.current.scrollHeight;},[messages,aiLoading]);
 
-  const showToast=(msg,type="success")=>{setToast({msg,type});setTimeout(()=>setToast(null),3200);};
+  const showToast=(msg,type="success")=>{setToast({msg,type});setTimeout(()=>setToast(null),3200)};
+
   const verifiedCount=docs.filter(d=>d.status==="verified").length;
   const compDone=compliance.filter(c=>c.done).length;
   const credits=confirmed?19:14;
@@ -716,138 +1005,147 @@ function StudentDashboard({ onLogout }) {
   const getMockReply = (text) => {
     const q = text.toLowerCase();
     const nl = "\n";
+    const missing = docs.filter(d=>d.status==="missing");
+    const compPending = compliance.filter(c=>!c.done);
+    const compDoneCount = compliance.filter(c=>c.done).length;
 
-    if (q.includes("document") || q.includes("doc") || q.includes("pending") || q.includes("upload") || q.includes("certificate")) {
-      const missing = docs.filter(d=>d.status==="missing");
-      if (missing.length === 0) return "Great news, Arjun! All your documents have been verified. No pending uploads — you are all set on the docs front!";
-      return "Arjun, you have **" + missing.length + " document(s)** still pending:" + nl + nl +
-        missing.map(d=>"• **" + d.name + "** — " + d.sub).join(nl) + nl + nl +
-        "The deadline is **Feb 20, 2026** — just a few days away! Head to the Document Verification section and click Upload next to each missing document. Late submissions may delay your Student ID card.";
+    // Greetings
+    if (q.match(/^(hi|hey|hello|good morning|good evening|sup|yo)\b/)) {
+      const greetings = ["Hey Arjun! 👋","Hello, Arjun!","Hi there, Arjun! 😊"];
+      const g = greetings[Math.floor(Math.random()*greetings.length)];
+      return g + " I'm **EduBot**, your smart onboarding assistant.\n\nYour current progress is **" + overallPct + "%** — here's your snapshot:\n\n• 📄 Docs: " + verifiedCount + "/9 verified" + (missing.length?" ⚠️ "+missing.length+" pending":"")+"\n• 💳 Fees: ✅ Fully paid\n• 📚 Courses: " + credits + "/19 credits"+(confirmed?"":" — elective needed")+"\n• 🎯 Compliance: " + compDoneCount + "/5 modules done\n\nWhat can I help you with today?";
     }
-    if (q.includes("elective") || q.includes("course") || q.includes("register") || q.includes("credit") || q.includes("ec10")) {
-      if (confirmed) return "You are all set, Arjun! Your course registration is complete with **19/19 credits** locked in. Your elective has been confirmed and a confirmation was sent to your institute email.";
-      return "For ECE students, I'd recommend **EC102 – Digital Logic Design** (5 credits). Here's why:" + nl + nl +
-        "• Strong foundation for your core ECE subjects" + nl +
-        "• Excellent placement relevance (VLSI, embedded systems)" + nl +
-        "• Prof has good ratings from previous batches" + nl + nl +
-        "Registration closes **Feb 23** — only 6 days left! You currently have 14/19 credits. Select your elective in the Course Registration section and hit Confirm.";
+
+    // Documents
+    if (q.match(/doc|upload|certif|marksheet|aadhaar|transfer|affidavit|missing|pending|verif/)) {
+      if (missing.length === 0) return "Great news, Arjun! ✅ **All 9 documents have been verified.** You're fully cleared on the documents front!\n\nYour Student ID card will be issued after final admin review. No further uploads needed.";
+      return "Arjun, you have **" + missing.length + " document(s) still missing** — these need urgent attention:\n\n" +
+        missing.map(d => "❗ **" + d.name + "**\n   → " + d.sub).join(nl+nl) + nl+nl +
+        "⏰ **Deadline: Feb 20, 2026** (that's just 2 days away!)\n\n**How to upload:**\n1. Scroll to the Document Verification card\n2. Click **↑ Upload** next to each missing document\n3. Accepted formats: PDF, JPG, PNG (max 5MB)\n\n⚠️ Late submission may delay your Student ID card and library access. Don't wait!";
     }
-    if (q.includes("orientation") || q.includes("orient") || q.includes("feb 28") || q.includes("auditorium")) {
-      return "Orientation Day is on **Feb 28, 2026 at 9:00 AM** at the **Main Auditorium**, Arjun." + nl + nl +
-        "What to expect:" + nl +
-        "• Welcome address by the Vice Chancellor" + nl +
-        "• Department-wise breakout sessions" + nl +
-        "• Library and LMS demo" + nl +
-        "• Meet your faculty mentors" + nl + nl +
-        "Please carry your provisional admission letter and a photo ID. Dress code is formal.";
+
+    // Courses / electives
+    if (q.match(/elective|course|credit|register|ec10[123]|signal|digital logic|microcontroll|timetable/)) {
+      if (confirmed) return "🎉 You're all set, Arjun! Course registration is **complete — 19/19 credits** locked in.\n\nYour selected elective (**" + (elective?.name||"EC102") + "**) has been confirmed. You'll receive your timetable on the LMS portal by **Feb 27**.\n\nNext up: Complete your remaining **" + compPending.length + " compliance module(s)** before March 1!";
+      return "For ECE B.Tech (2024-28), I'd strongly recommend:\n\n🏆 **EC102 — Digital Logic Design** (5 credits)\n_This is the smart pick, Arjun. Here's why:_\n\n• Directly feeds into VLSI, Embedded Systems, and Chip Design roles\n• High placement relevance — top companies like Intel, Texas Instruments, Qualcomm recruit for this\n• Prof. has a 4.7/5 student rating from previous batches\n• 28/40 seats filled — still comfortable space\n\nAlternatives:\n• **EC101** — Signals & Systems (good theory, 32/40 seats)\n• **EC103** — Microcontrollers (limited! 38/40 seats — almost full)\n\n⏰ Registration closes **Feb 23 at 11:59 PM** — you're currently at **14/19 credits**. Go to the Course Registration card and pick your elective now!";
     }
-    if (q.includes("lms") || q.includes("portal") || q.includes("activate") || q.includes("email") || q.includes("account")) {
-      return "To activate your LMS access, Arjun:" + nl + nl +
-        "1. Go to **lms.srmist.edu.in**" + nl +
-        "2. Click First-time Login" + nl +
-        "3. Use your roll number **24ECE047** as username" + nl +
-        "4. Use your institute email password" + nl + nl +
-        "If you face issues, contact: **helpdesk@srm.edu.in** or call Ext. **1800** (Mon–Sat, 9AM–6PM).";
+
+    // Orientation
+    if (q.match(/orientat|feb.?28|auditorium|inaugur|welcome/)) {
+      return "🎓 **Orientation Day — Feb 28, 2026**\n\n📍 Main Auditorium, SRM Campus\n⏰ 9:00 AM sharp (doors open 8:30 AM)\n\n**Schedule:**\n• 9:00 AM — Welcome address by Vice Chancellor\n• 10:00 AM — Department-wise breakout sessions\n• 11:30 AM — Library & LMS orientation\n• 12:30 PM — Meet your faculty mentor\n• 2:00 PM — Campus tour & cultural intro\n\n**Bring with you:**\n• Provisional admission letter\n• Any valid photo ID\n• Notepad (tips will be shared!)\n\nDress code is **smart casual / formal**. Don't be late, Arjun — first impressions matter! 😄";
     }
-    if (q.includes("mentor") || q.includes("priya") || q.includes("meeting") || q.includes("feb 25")) {
-      return "Your assigned mentor is **Dr. Priya Menon**, Asst. Professor, ECE Dept (PhD, IIT Madras)." + nl + nl +
-        "First meeting: **Feb 25, 2026 at 10:00 AM**" + nl +
-        "Location: ECE Block, Room 312" + nl + nl +
-        "For your first meeting, prepare:" + nl +
-        "• Your academic goals and areas of interest" + nl +
-        "• Questions about research opportunities" + nl +
-        "• Any concerns about your course load" + nl + nl +
-        "You can reach her at **priya.m@srm.edu.in** if you need to reschedule.";
+
+    // LMS / portal / account
+    if (q.match(/lms|portal|login|activate|account|email|password|srmist\.edu/)) {
+      return "Here's how to activate your **LMS & Institute Email**, Arjun:\n\n**Step 1 — LMS Portal**\n1. Visit **lms.srmist.edu.in**\n2. Click _First-time Login_\n3. Username: **24ECE047**\n4. Temporary password: your DOB (DDMMYYYY)\n5. Change password on first login\n\n**Step 2 — Institute Email**\n• Your email: **arjun.rathi@srm.edu.in**\n• Login via Google Workspace using institute credentials\n\n**Step 3 — Mobile App**\n• Download _SRM Academia_ from Play Store / App Store\n• Your timetable, attendance & grades will be here\n\n📞 Helpdesk: **helpdesk@srm.edu.in** · Ext. **1800** (Mon–Sat, 9AM–6PM)";
     }
-    if (q.includes("fee") || q.includes("payment") || q.includes("paid") || q.includes("receipt") || q.includes("money")) {
-      return "Your fee payment is **fully cleared**, Arjun!" + nl + nl +
-        "Payment summary:" + nl +
-        "• Tuition Fee: Rs. 1,20,000" + nl +
-        "• Hostel Fee: Rs. 48,000" + nl +
-        "• Mess Deposit: Rs. 12,000" + nl +
-        "• Lab and Library: Rs. 8,500" + nl + nl +
-        "**Total: Rs. 1,88,500** · Ref: TXN-2024-47891" + nl + nl +
-        "You can download your official receipt from the Fee Payment section. No further action needed!";
+
+    // Mentor
+    if (q.match(/mentor|priya|menon|feb.?25|meeting|faculty|advisor|discuss|prepare|first meet/)) {
+      return "Your faculty mentor is **Dr. Priya Menon** 👩‍🏫\n_Asst. Professor, ECE Dept · PhD, IIT Madras · 12 years experience_\n\n📅 **First Meeting: Feb 25, 2026 at 10:00 AM**\n📍 ECE Block, Room 312\n📧 priya.m@srm.edu.in\n\n**What to prepare for your first session:**\n• 2–3 academic goals for your first semester\n• Areas of interest (VLSI? Embedded? Communications?)\n• Any concerns about course load or hostel\n• Questions about research opportunities or internships\n\n**Pro tip from EduBot:** Mentors love students who come prepared. Write down 3 specific questions beforehand — it shows initiative and makes the session more productive! 💡\n\nNeed to reschedule? Email Dr. Menon at least 48 hours before.";
     }
-    if (q.includes("compliance") || q.includes("module") || q.includes("anti-ragging") || q.includes("policy") || q.includes("conduct")) {
-      const done = compliance.filter(c=>c.done).length;
-      const pending = compliance.filter(c=>!c.done);
-      return "You have completed **" + done + "/5** compliance modules, Arjun." + nl + nl +
-        "Remaining modules:" + nl +
-        pending.map(c=>"• **" + c.label + "** — Due " + c.due).join(nl) + nl + nl +
-        "To complete them:" + nl +
-        "1. Go to the Mentoring and Compliance section" + nl +
-        "2. Click each module to mark it complete" + nl + nl +
-        "All modules must be done before **Mar 1** to receive your final admission clearance.";
+
+    // Fees / payment
+    if (q.match(/fee|payment|paid|receipt|money|rupee|₹|transaction|txn|refund/)) {
+      return "Your fees are **fully cleared**, Arjun! ✅ Here's the complete breakdown:\n\n| Component | Amount | Date |\n|---|---|---|\n| Tuition Fee | ₹1,20,000 | Jan 8 |\n| Hostel Fee | ₹48,000 | Jan 8 |\n| Mess Deposit | ₹12,000 | Jan 8 |\n| Lab & Library | ₹8,500 | Jan 9 |\n\n💰 **Total Paid: ₹1,88,500**\n🔖 Reference: **TXN-2024-47891**\n\nYou can download your official receipt from the **Fee Payment section** → _Download Receipt_ button.\n\nNo additional payments are due for Semester 1. 🎉";
     }
-    if (q.includes("hostel") || q.includes("room") || q.includes("block") || q.includes("mess")) {
-      return "Your hostel room has been allotted, Arjun!" + nl + nl +
-        "• **Block A, Room 214**" + nl +
-        "• Check-in is open — bring your allotment letter" + nl +
-        "• Mess timings: Breakfast 7–9AM · Lunch 12–2PM · Dinner 7–9PM" + nl + nl +
-        "For hostel queries: **hostel@srm.edu.in**" + nl +
-        "For mess issues, speak to the mess manager directly.";
+
+    // Compliance modules
+    if (q.match(/compliance|module|anti.?ragg|safety|integrity|conduct|code of|library module|campus safety/)) {
+      if (compPending.length === 0) return "🏆 Amazing, Arjun! You've completed **all 5 compliance modules**. You're fully cleared on the compliance front!\n\nThis unlocks your **Final Admission Clearance** — great work!";
+      return "You've done **" + compDoneCount + "/5** compliance modules so far. Here's what's left:\n\n" +
+        compPending.map(c => "⏳ **" + c.label + "** — Due " + c.due).join(nl) + nl+nl +
+        "**How to complete them:**\n1. Open the **Mentoring & Compliance** card below\n2. Click any module checkbox to mark it done\n3. Each module takes about 10–15 minutes\n\n⚠️ All modules must be finished by **March 1** to receive your final admission clearance. Don't leave these for the last minute, Arjun!";
     }
-    if (q.includes("class") || q.includes("start") || q.includes("march 3") || q.includes("mar 3") || q.includes("begin")) {
-      return "Classes officially begin on **March 3, 2026**, Arjun!" + nl + nl +
-        "Before then, make sure you have:" + nl +
-        "• Uploaded all documents (deadline: Feb 20)" + nl +
-        "• Completed course registration (deadline: Feb 23)" + nl +
-        "• Attended orientation (Feb 28)" + nl +
-        "• Completed compliance modules (by Mar 1)" + nl + nl +
-        "Your timetable will be available on the LMS portal by Feb 27. You are almost there!";
+
+    // Hostel / mess
+    if (q.match(/hostel|room|block a|mess|food|canteen|check.?in|warden|laundry/)) {
+      return "Your hostel details, Arjun:\n\n🏠 **Block A, Room 214** (Allotted Jan 12)\n\n**Check-in:** Open anytime — bring your allotment letter + photo ID\n**Warden contact:** Block A Warden · warden.a@srm.edu.in\n\n**Mess Timings:**\n🌅 Breakfast: 7:00 – 9:00 AM\n☀️ Lunch: 12:00 – 2:00 PM\n🌙 Dinner: 7:00 – 9:00 PM\n\n**Facilities in Block A:** WiFi, laundry room (basement), study hall (ground floor), gym access (8AM–8PM)\n\n📧 Hostel queries: **hostel@srm.edu.in**\n🍽️ Mess issues: Speak to the Mess Manager directly (Mess Hall, Ground Floor)";
     }
-    if (q.includes("hello") || q.includes("hi") || q.includes("hey") || q.includes("help") || q.includes("what can")) {
-      const pct = Math.round((docs.filter(d=>d.status==="verified").length/9)*25+25+(credits/19)*25+(compliance.filter(c=>c.done).length/5)*25);
-      return "Hello Arjun! I am **EduBot**, your personal onboarding assistant for Visored." + nl + nl +
-        "You are currently **" + pct + "% through** your onboarding. I can help with:" + nl + nl +
-        "• **Documents** — check pending uploads" + nl +
-        "• **Courses** — elective guidance and registration" + nl +
-        "• **Compliance** — module completion steps" + nl +
-        "• **Deadlines** — key dates and reminders" + nl +
-        "• **Hostel and Mess** — room and facilities info" + nl +
-        "• **LMS and Portal** — account activation help" + nl + nl +
-        "Just ask me anything!";
+
+    // Classes / start date
+    if (q.match(/class|start|march.?3|mar.?3|begin|semester|first day/)) {
+      const remaining = [];
+      if (missing.length > 0) remaining.push("Upload " + missing.length + " document(s) by Feb 20");
+      if (!confirmed) remaining.push("Complete course registration by Feb 23");
+      remaining.push("Attend Orientation on Feb 28");
+      if (compPending.length > 0) remaining.push("Finish " + compPending.length + " compliance module(s) by Mar 1");
+      return "🎓 **Classes begin March 3, 2026!**\n\nYou're " + overallPct + "% ready. Here's your final checklist before Day 1:\n\n" +
+        remaining.map((r,i)=>`${i+1}. ${r}`).join(nl) + nl+nl +
+        "Your timetable will be live on the LMS by **Feb 27**. Make sure you install the _SRM Academia_ app before then!\n\n" +
+        (remaining.length <= 1 ? "You're almost there, Arjun — just the finishing touches! 🚀" : "Stay on top of these and you'll start March 3 with zero stress! 💪");
     }
-    if (q.includes("important") || q.includes("priority") || q.includes("right now") || q.includes("urgent") || q.includes("first")) {
-      const missingDocs = docs.filter(d=>d.status==="missing").length;
-      if (missingDocs > 0) return "Your most urgent task right now, Arjun, is uploading your **" + missingDocs + " missing document(s)** — the deadline is **Feb 20** which is only 3 days away!" + nl + nl +
-        "After that, complete your **course registration** by Feb 23 if you have not picked your elective yet." + nl + nl +
-        "Go to the Document Verification card and click Upload next to the missing items. It only takes a few minutes!";
-      if (!confirmed) return "Your next priority is **course registration** — pick your elective and confirm by **Feb 23**, Arjun. You are at 14/19 credits. I recommend EC102 Digital Logic Design!" + nl + nl +
-        "After that, focus on your **compliance modules** (" + (5-compliance.filter(c=>c.done).length) + " remaining, due Mar 1).";
-      return "You are in great shape, Arjun! Your main focus now should be the **compliance modules** (" + (5-compliance.filter(c=>c.done).length) + " remaining, due Mar 1) and attending **Orientation on Feb 28**. Classes begin March 3 — you are almost ready!";
+
+    // Progress / status / summary
+    if (q.match(/progress|status|summary|overview|how am i|where am i|complete|percent|percent/)) {
+      return "Here's your full onboarding status, Arjun:\n\n📊 **Overall: " + overallPct + "% complete**\n\n" +
+        "📄 **Documents:** " + verifiedCount + "/9 verified" + (missing.length ? " ⚠️ " + missing.length + " missing (due Feb 20)" : " ✅") + "\n" +
+        "💳 **Fees:** ₹1,88,500 paid ✅\n" +
+        "📚 **Courses:** " + credits + "/19 credits" + (confirmed ? " ✅" : " ⏳ — pick elective by Feb 23") + "\n" +
+        "🎯 **Compliance:** " + compDoneCount + "/5 modules" + (compDoneCount===5 ? " ✅" : " ⏳ — " + compPending.length + " pending by Mar 1") + "\n\n" +
+        "**Your next 3 actions:**\n" +
+        (missing.length ? "1. Upload Transfer Certificate & Anti-Ragging Affidavit\n" : "") +
+        (!confirmed ? (missing.length?"2":"1") + ". Register your elective (EC102 recommended)\n" : "") +
+        (compPending.length ? (missing.length&&!confirmed?"3":missing.length||!confirmed?"2":"1") + ". Complete compliance modules\n" : "") +
+        "\nYou're doing well — keep pushing, Arjun! 🙌";
     }
-    if (q.includes("registrar") || q.includes("contact") || q.includes("support") || q.includes("helpdesk") || q.includes("phone")) {
-      return "Key contacts at SRM, Arjun:" + nl + nl +
-        "• **Helpdesk:** helpdesk@srm.edu.in · Ext. 1800" + nl +
-        "• **Registrar:** registrar@srm.edu.in" + nl +
-        "• **Hostel Office:** hostel@srm.edu.in" + nl +
-        "• **Mentor:** priya.m@srm.edu.in" + nl + nl +
-        "Office hours: Mon–Sat, 9AM–5PM. For urgent issues, email the helpdesk — they respond within 24 hours.";
+
+    // Contacts / helpdesk
+    if (q.match(/contact|helpdesk|registrar|support|phone|email|ext|number|reach|call/)) {
+      return "📞 **Key Contacts at SRM**, Arjun:\n\n• **Helpdesk:** helpdesk@srm.edu.in · Ext. **1800**\n• **Registrar's Office:** registrar@srm.edu.in · Ext. **1200**\n• **Hostel Office:** hostel@srm.edu.in · Ext. **1500**\n• **Mentor:** priya.m@srm.edu.in\n• **Library:** library@srm.edu.in\n\n🕒 Office hours: **Mon–Sat, 9AM–5PM**\n\nFor urgent issues, the helpdesk responds within **24 hours** on weekdays. You can also walk into the Admin Block (Ground Floor) between 10AM–4PM.";
     }
-    const defaults = [
-      "I can help you with that, Arjun! Could you be more specific? For example, are you asking about your pending documents, course registration, mentor meeting, compliance modules, or classes starting March 3? Just rephrase and I will give you a detailed answer!",
-      "Good question, Arjun! Here is what I know is most urgent for you right now: Feb 20 — Upload remaining documents, Feb 23 — Complete course registration, Feb 28 — Orientation Day at 9AM, Mar 3 — Classes begin. Ask me about any of these!",
-      "I am here to help, Arjun! I have detailed info on your documents, courses, fees, hostel, mentor, compliance modules, and key deadlines. Try asking: What documents are still pending? or Which elective should I pick? or When does orientation start?"
+
+    // What to do next / priority
+    if (q.match(/what.*do|next|priority|urgent|important|first|todo|action|should i/)) {
+      if (missing.length > 0) return "🚨 **Top priority right now: Upload your missing documents!**\n\nYou have **" + missing.length + " doc(s)** due in just **2 days (Feb 20)**:\n" +
+        missing.map(d=>"• "+d.name).join(nl) + "\n\nAfter that:\n2. Pick your elective → confirm courses by Feb 23\n3. Finish compliance modules before Mar 1\n4. Attend Orientation on Feb 28\n\nDon't delay the docs, Arjun — that's the most time-sensitive item!";
+      if (!confirmed) return "📋 **Your next priority: Complete course registration!**\n\nYou're at **14/19 credits** — just need to pick one elective. I recommend **EC102 (Digital Logic Design)**.\n\n⏰ Deadline: **Feb 23 at 11:59 PM**\n\nAfter that, knock out your **" + compPending.length + " compliance modules** (due Mar 1) and you'll be fully onboarded! 🎉";
+      return "You're in great shape, Arjun! 🌟\n\nFocus areas:\n1. Complete **" + compPending.length + " compliance module(s)** — due Mar 1\n2. Attend **Orientation** on Feb 28 at 9AM\n3. Check your **timetable** on LMS after Feb 27\n\nClasses begin March 3 — you're nearly ready! 🚀";
+    }
+
+    // Fallback — intelligent context-aware default
+    const fallbacks = [
+      "Hmm, I want to make sure I give you the right info, Arjun! I'm best at helping with:\n\n• 📄 **Documents** — pending uploads & deadlines\n• 📚 **Courses** — elective selection & registration\n• 🎯 **Compliance** — module completion\n• 🏠 **Hostel** — room & mess info\n• 📅 **Key dates** — orientation, classes, mentor meeting\n• 🔐 **LMS** — portal activation\n\nCould you rephrase your question? I'm here to help!",
+      "I want to help, Arjun! Based on your current status (**" + overallPct + "% complete**), the most important things right now are:\n\n" + (missing.length?"• Upload "+missing.length+" pending document(s) by Feb 20\n":"") + (!confirmed?"• Register your elective by Feb 23\n":"") + (compPending.length?"• Complete "+compPending.length+" compliance module(s) by Mar 1\n":"") + "\nAsk me specifically about any of these — I've got all the details!",
+      "Great question! I may need a bit more context to give you the best answer. Try asking me things like:\n\n_\"What documents are still pending?\"_\n_\"Which elective should I pick for ECE?\"_\n_\"What happens at orientation?\"_\n_\"How do I activate my LMS account?\"_\n\nI'm powered by Visored's knowledge base and know everything about your specific onboarding journey! 🤖"
     ];
-    return defaults[text.length % 3];
+    return fallbacks[Math.floor(Math.random()*fallbacks.length)];
   };
+
+  // Simulate realistic streaming: show response word by word, then speak
+  const streamReply = useCallback((reply) => {
+    const words = reply.split(" ");
+    let i = 0;
+    setMessages(prev => [...prev, {role:"assistant", content:""}]);
+    const interval = setInterval(() => {
+      i++;
+      setMessages(prev => {
+        const updated = [...prev];
+        updated[updated.length-1] = {role:"assistant", content: words.slice(0,i).join(" ")};
+        return updated;
+      });
+      if (i >= words.length) {
+        clearInterval(interval);
+        setAiLoad(false);
+        speakReply(reply);
+      }
+    }, 28);
+  }, [speakReply]);
 
   const sendChat=useCallback(async(e,prefill)=>{
     if(e)e.preventDefault();
     const text=prefill||inputVal.trim();
     if(!text||aiLoading)return;
     setInput("");
-    const newMsgs=[...messages,{role:"user",content:text}];
-    setMessages(newMsgs);setAiLoad(true);
+    setMessages(prev=>[...prev,{role:"user",content:text}]);
+    setAiLoad(true);
     if(!chatOpen)setChatOpen(true);
-    // Simulate typing delay (600–1200ms)
-    await new Promise(r=>setTimeout(r,600+Math.random()*600));
+    // Simulate thinking delay (800–1400ms)
+    await new Promise(r=>setTimeout(r,800+Math.random()*600));
     const reply = getMockReply(text);
-    setMessages(p=>[...p,{role:"assistant",content:reply}]);
-    setAiLoad(false);
-  },[inputVal,messages,aiLoading,chatOpen,docs,compliance,confirmed,credits]);
+    streamReply(reply);
+  },[inputVal,messages,aiLoading,chatOpen,docs,compliance,confirmed,credits,overallPct,streamReply]);
+
 
   const quickAsk=q=>{setInput(q);setTimeout(()=>sendChat(null,q),60);};
   const md=text=><span dangerouslySetInnerHTML={{__html:text.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br/>")}}/>;
@@ -859,21 +1157,30 @@ function StudentDashboard({ onLogout }) {
     {id:"mentor", emoji:"🎯",label:"Mentoring & Compliance", sub:`${compDone}/5 modules complete`,    pct:Math.round(compDone/5*100),       v:compDone===5?"green":"blue"},
   ];
 
+  // Dark mode palette
+  const dm     = dark;
+  const bg     = dm ? "#0f172a" : "#f9fafb";
+  const surf   = dm ? "#1e293b" : "#ffffff";
+  const bdr    = dm ? "#334155" : "#f3f4f6";
+  const tx1    = dm ? "#f1f5f9" : "#111827";
+  const tx2    = dm ? "#94a3b8" : "#6b7280";
+  const tx3    = dm ? "#64748b" : "#9ca3af";
+
   return (
-    <div style={{fontFamily:"'Sora',system-ui,sans-serif",background:"#f9fafb",minHeight:"100vh",color:"#111827",width:"100%"}}>
+    <div style={{fontFamily:"'Sora',system-ui,sans-serif",background:bg,minHeight:"100vh",color:tx1,width:"100%",transition:"background .35s,color .35s"}}>
       {toast&&<Toast msg={toast.msg} type={toast.type}/>}
 
       {/* Topbar */}
-      <header style={{background:"#fff",borderBottom:"1.5px solid #f3f4f6",display:"flex",alignItems:"center",padding:"0 16px",position:"sticky",top:0,zIndex:100,height:58,gap:8}}>
+      <header style={{background:surf,borderBottom:`1.5px solid ${bdr}`,display:"flex",alignItems:"center",padding:"0 16px",position:"sticky",top:0,zIndex:100,height:58,gap:8,transition:"background .35s,border-color .35s"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,marginRight:32}}>
           <div style={{width:30,height:30,background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🎓</div>
-          <span style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:"#111827",letterSpacing:"-0.03em"}}>Visored</span>
+          <span style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:tx1,letterSpacing:"-0.03em"}}>Visored</span>
         </div>
         {!isMobile && (
           <nav style={{display:"flex",gap:2}}>
-            {[["dashboard","Dashboard"],["timeline","Timeline"],["notifications","Alerts"]].map(([id,label])=>(
+            {[["dashboard","Dashboard"],["timeline","Timeline"],["roadmap","🗺 Roadmap"],["notifications","Alerts"]].map(([id,label])=>(
               <button key={id} onClick={()=>setPage(id)}
-                style={{padding:"6px 14px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:page===id?600:400,background:page===id?"#f0fdf4":"transparent",color:page===id?"#16a34a":"#6b7280",transition:"all .15s",position:"relative"}}>
+                style={{padding:"6px 14px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:page===id?600:400,background:page===id?"#f0fdf4":"transparent",color:page===id?"#16a34a":tx2,transition:"all .15s",position:"relative"}}>
                 {label}
                 {id==="notifications"&&unread>0&&<span style={{position:"absolute",top:2,right:4,width:14,height:14,background:"#ef4444",borderRadius:"50%",fontSize:9,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{unread}</span>}
               </button>
@@ -881,7 +1188,7 @@ function StudentDashboard({ onLogout }) {
           </nav>
         )}
         {isMobile && (
-          <button onClick={()=>setMobileNav(!mobileNav)} style={{marginLeft:"auto",background:"none",border:"none",fontSize:24,cursor:"pointer",color:"#374151",padding:"4px 8px",lineHeight:1}}>☰</button>
+          <button onClick={()=>setMobileNav(!mobileNav)} style={{marginLeft:"auto",background:"none",border:"none",fontSize:24,cursor:"pointer",color:tx2,padding:"4px 8px",lineHeight:1}}>☰</button>
         )}
         {!isMobile && <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:12}}>
           <div style={{display:"flex",alignItems:"center",gap:8,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:20,padding:"5px 14px 5px 8px"}}>
@@ -894,19 +1201,114 @@ function StudentDashboard({ onLogout }) {
           <div style={{display:"flex",alignItems:"center",gap:9,cursor:"pointer",padding:"4px 10px 4px 4px",borderRadius:20,border:"1.5px solid #f3f4f6",background:"#fff"}}>
             <div style={{width:30,height:30,background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#fff"}}>AR</div>
             <div>
-              <div style={{fontSize:12.5,fontWeight:600,color:"#111827",lineHeight:1.2}}>Arjun Rathi</div>
-              <div style={{fontSize:10.5,color:"#9ca3af"}}>24ECE047</div>
+              <div style={{fontSize:12.5,fontWeight:600,color:tx1,lineHeight:1.2}}>Arjun Rathi</div>
+              <div style={{fontSize:10.5,color:tx3}}>24ECE047</div>
             </div>
           </div>
+          {/* Dark mode toggle */}
+          <button onClick={()=>setDark(d=>!d)} title={dark?"Light mode":"Dark mode"}
+            style={{width:36,height:36,borderRadius:10,border:`1.5px solid ${bdr}`,background:surf,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,transition:"all .2s",flexShrink:0}}>
+            {dark?"☀️":"🌙"}
+          </button>
           <button onClick={onLogout}
-            style={{padding:"7px 14px",borderRadius:9,border:"1.5px solid #e5e7eb",background:"#fff",
-              color:"#6b7280",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
+            style={{padding:"7px 14px",borderRadius:9,border:`1.5px solid ${bdr}`,background:surf,
+              color:tx2,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}}
             onMouseEnter={e=>{e.currentTarget.style.borderColor="#dc2626";e.currentTarget.style.color="#dc2626";}}
-            onMouseLeave={e=>{e.currentTarget.style.borderColor="#e5e7eb";e.currentTarget.style.color="#6b7280";}}>
+            onMouseLeave={e=>{e.currentTarget.style.borderColor=bdr;e.currentTarget.style.color=tx2;}}>
             Sign out
           </button>
         </div>}
       </header>
+
+      {/* ROADMAP PAGE */}
+      {page==="roadmap"&&(
+        <div style={{maxWidth:700,margin:"0 auto",padding:isMobile?"16px 14px 80px":"36px 24px"}}>
+          <div style={{marginBottom:28}}>
+            <h2 style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,letterSpacing:"-0.02em",marginBottom:6}}>Your Onboarding Quest 🗺️</h2>
+            <p style={{fontSize:13,color:"#6b7280"}}>Complete all stages before classes begin on March 3</p>
+          </div>
+          {/* Quest map visual */}
+          <div style={{display:"flex",flexDirection:"column",gap:0}}>
+            {[
+              {id:"docs",   emoji:"📄",title:"Document Verification",  desc:"Upload all required certificates and affidavits",     pct:Math.round(verifiedCount/9*100),  done:verifiedCount===9, urgent:docs.filter(d=>d.status==="missing").length>0, reward:"Student ID Card unlocked",  step:1},
+              {id:"fee",    emoji:"💳",title:"Fee Payment",            desc:"Tuition, hostel, mess & lab fees cleared",             pct:100,                               done:true,               urgent:false,                                             reward:"Hostel room allotted",      step:2},
+              {id:"courses",emoji:"📚",title:"Course Registration",    desc:"Select your elective and lock in 19 credits",          pct:Math.round(credits/19*100),        done:confirmed,          urgent:!confirmed,                                        reward:"Timetable released",        step:3},
+              {id:"mentor", emoji:"🎯",title:"Mentoring & Compliance", desc:"Meet Dr. Priya Menon & finish 5 compliance modules",   pct:Math.round(compDone/5*100),        done:compDone===5,       urgent:false,                                             reward:"Final clearance granted",   step:4},
+              {id:"ready",  emoji:"🎓",title:"Classes Begin!",         desc:"You're fully onboarded — welcome to SRM!",             pct:overallPct===100?100:0,            done:overallPct===100,   urgent:false,                                             reward:"Academic journey starts",   step:5},
+            ].map((q,i,arr)=>{
+              const isActive = !q.done && (i===0 || arr[i-1].done);
+              const isLocked = !q.done && i>0 && !arr[i-1].done;
+              const bc = q.done?"#16a34a":isActive?q.urgent?"#ef4444":"#f59e0b":"#e5e7eb";
+              const bg = q.done?"#f0fdf4":isActive?q.urgent?"#fef2f2":"#fffbeb":"#f9fafb";
+              return (
+                <div key={q.id} style={{display:"flex",gap:0,position:"relative"}}>
+                  {/* Connector line */}
+                  {i<arr.length-1&&<div style={{position:"absolute",left:27,top:58,bottom:-2,width:3,background:q.done?"#16a34a":"#e5e7eb",zIndex:0,borderRadius:2}}/>}
+                  <div style={{display:"flex",gap:16,flex:1,paddingBottom:i<arr.length-1?24:0,position:"relative",zIndex:1}}>
+                    {/* Step circle */}
+                    <div style={{flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center"}}>
+                      <div style={{width:56,height:56,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,background:bg,border:`3px solid ${bc}`,boxShadow:isActive?`0 0 0 5px ${bc}22`:q.done?"0 0 0 4px #16a34a22":"none",transition:"all .3s"}}>
+                        {q.done?"✅":isLocked?"🔒":q.emoji}
+                      </div>
+                    </div>
+                    {/* Card */}
+                    <div style={{flex:1,background:"#fff",border:`1.5px solid ${isActive?bc:"#f3f4f6"}`,borderRadius:14,padding:"16px 18px",marginBottom:0,boxShadow:isActive?"0 4px 20px rgba(0,0,0,0.07)":"none",transition:"all .3s",opacity:isLocked?0.55:1}}>
+                      <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,marginBottom:8}}>
+                        <div>
+                          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
+                            <span style={{fontSize:10.5,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:bc}}>Stage {q.step}</span>
+                            {isActive&&<Badge v={q.urgent?"red":"amber"}>{q.urgent?"Urgent":"Active"}</Badge>}
+                            {q.done&&<Badge v="green">✓ Complete</Badge>}
+                            {isLocked&&<Badge v="neutral">🔒 Locked</Badge>}
+                          </div>
+                          <div style={{fontSize:15,fontWeight:700,color:"#111827",marginBottom:3}}>{q.title}</div>
+                          <div style={{fontSize:12.5,color:"#6b7280"}}>{q.desc}</div>
+                        </div>
+                        {!isLocked&&<div style={{position:"relative",flexShrink:0}}>
+                          <ProgressRing pct={q.pct} size={52} stroke={4.5} color={bc}/>
+                          <span style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:bc}}>{q.pct}%</span>
+                        </div>}
+                      </div>
+                      {/* Progress bar */}
+                      {!isLocked&&<div style={{height:5,background:"#f3f4f6",borderRadius:3,overflow:"hidden",marginBottom:10}}>
+                        <div style={{height:"100%",width:`${q.pct}%`,background:bc,borderRadius:3,transition:"width 1s ease"}}/>
+                      </div>}
+                      {/* Reward */}
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                        <div style={{fontSize:11.5,color:q.done?"#16a34a":"#9ca3af",display:"flex",alignItems:"center",gap:5}}>
+                          <span>{q.done?"🏆":"🎁"}</span>
+                          <span style={{fontWeight:q.done?600:400}}>{q.reward}</span>
+                        </div>
+                        {isActive&&<button onClick={()=>{setPage("dashboard");setActive(q.id);}} style={{padding:"5px 14px",borderRadius:8,border:"none",background:bc,color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Go →</button>}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Peer comparison */}
+          <div style={{marginTop:24,background:"linear-gradient(135deg,#f0fdf4,#dcfce7)",border:"1.5px solid #86efac",borderRadius:14,padding:"18px 20px"}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#15803d",marginBottom:10}}>📊 How You Compare (Anonymous)</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+              {[["Your Progress",`${overallPct}%`,"#16a34a"],["Batch Average","58%","#6b7280"],["Top 25% of Batch","74%+","#7c3aed"]].map(([l,v,c])=>(
+                <div key={l} style={{textAlign:"center"}}>
+                  <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:700,color:c}}>{v}</div>
+                  <div style={{fontSize:11,color:"#6b7280",marginTop:3}}>{l}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{marginTop:12,height:6,background:"rgba(255,255,255,0.5)",borderRadius:3,overflow:"hidden",position:"relative"}}>
+              <div style={{position:"absolute",height:"100%",width:"58%",background:"#9ca3af",borderRadius:3}}/>
+              <div style={{position:"absolute",height:"100%",width:`${overallPct}%`,background:"#16a34a",borderRadius:3}}/>
+              <div style={{position:"absolute",height:"100%",left:"74%",width:2,background:"#7c3aed",borderRadius:1}}/>
+            </div>
+            <div style={{fontSize:12,color:"#15803d",marginTop:8,fontWeight:500}}>
+              {overallPct>=74?"🏆 You're in the top 25% of your batch! Keep going!":overallPct>=58?"👍 You're above the batch average — just 3 more tasks!":"💪 You're close to the batch average — complete your pending docs to catch up!"}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* NOTIFICATIONS PAGE */}
       {page==="notifications"&&(
@@ -968,7 +1370,7 @@ function StudentDashboard({ onLogout }) {
             <div onClick={()=>setMobileNav(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:298}}/>
           )}
           {/* Sidebar */}
-          <aside style={{background:"#fff",borderRight:"1.5px solid #f3f4f6",padding:"22px 0",overflowY:"auto",flexShrink:0,
+          <aside style={{background:surf,borderRight:`1.5px solid ${bdr}`,padding:"22px 0",overflowY:"auto",flexShrink:0,transition:"background .35s,border-color .35s",
             ...(isMobile ? {
               position:"fixed",top:0,left:mobileNav?0:"-300px",width:280,height:"100vh",zIndex:299,
               transition:"left .25s cubic-bezier(.4,0,.2,1)",boxShadow:mobileNav?"4px 0 24px rgba(0,0,0,0.15)":"none"
@@ -1015,11 +1417,11 @@ function StudentDashboard({ onLogout }) {
             </div>
 
             <div style={{padding:"0 16px",marginBottom:22}}>
-              <div style={{fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"#9ca3af",marginBottom:10,padding:"0 2px"}}>Next Deadline</div>
-              <div style={{background:"#fef3c7",border:"1.5px solid rgba(217,119,6,0.25)",borderRadius:12,padding:"14px"}}>
-                <div style={{fontSize:12,fontWeight:600,color:"#92400e",marginBottom:4}}>{confirmed?"Document Upload":"Course Registration"}</div>
-                <div style={{fontFamily:"'Fraunces',serif",fontSize:26,color:"#111827",lineHeight:1}}>{confirmed?"3 days":"6 days"}</div>
-                <div style={{fontSize:11,color:"#78716c",marginTop:4}}>{confirmed?"Feb 20, 2026":"Feb 23, 2026 · 11:59 PM"}</div>
+              <div style={{fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:tx3,marginBottom:10,padding:"0 2px"}}>Next Deadline</div>
+              <div style={{background:dm?"#1e293b":"#fef3c7",border:`1.5px solid rgba(217,119,6,0.25)`,borderRadius:12,padding:"14px"}}>
+                <div style={{fontSize:12,fontWeight:600,color:"#92400e",marginBottom:8}}>{confirmed?"Document Upload":"Course Registration"}</div>
+                <Countdown targetDate={confirmed?"2026-02-20T23:59:00":"2026-02-23T23:59:00"} />
+                <div style={{fontSize:11,color:tx3,marginTop:8}}>{confirmed?"Feb 20, 2026 · 11:59 PM":"Feb 23, 2026 · 11:59 PM"}</div>
               </div>
             </div>
 
@@ -1030,7 +1432,7 @@ function StudentDashboard({ onLogout }) {
             )}
             <div style={{padding:"0 16px"}}>
               <div style={{fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"#9ca3af",marginBottom:10,padding:"0 2px"}}>Ask EduBot</div>
-              {["Pending documents?","Best elective for ECE?","When is orientation?","How to activate LMS?"].map(q=>(
+              {["What's my next priority?","Pending documents?","Best elective for ECE?","How to activate LMS?","What happens at orientation?"].map(q=>(
                 <button key={q} onClick={()=>{setChatOpen(true);quickAsk(q);}}
                   style={{width:"100%",textAlign:"left",background:"#f9fafb",border:"1.5px solid #f3f4f6",borderRadius:9,padding:"8px 11px",marginBottom:5,fontSize:12,color:"#374151",cursor:"pointer",fontFamily:"inherit",transition:"all .15s",display:"flex",alignItems:"center",gap:8}}
                   onMouseEnter={e=>{e.currentTarget.style.background="#f0fdf4";e.currentTarget.style.borderColor="#bbf7d0";}}
@@ -1058,25 +1460,35 @@ function StudentDashboard({ onLogout }) {
               </div>
             </div>
 
-            {/* Stat row */}
+            {/* Stat row — animated counters */}
             <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)",gap:10,marginBottom:16,animation:"fadeUp .5s .06s ease both"}}>
-              {[[`${verifiedCount}/9`,"Docs Verified",verifiedCount===9?"#f0fdf4":"#fefce8",verifiedCount===9?"#16a34a":"#d97706"],["₹1,88,500","Fees Paid","#f0fdf4","#16a34a"],[`${credits}/19 cr`,"Credits",confirmed?"#f0fdf4":"#fefce8",confirmed?"#16a34a":"#d97706"],[`${compDone}/5`,"Compliance","#eff6ff","#2563eb"]].map(([val,label,bg,col],i)=>(
-                <div key={label} style={{background:bg,border:`1.5px solid ${col}22`,borderRadius:12,padding:"14px 16px",transition:"transform .15s"}}
+              {[
+                [verifiedCount, "Docs Verified",  verifiedCount===9?"#f0fdf4":"#fefce8", verifiedCount===9?"#16a34a":"#d97706", "/9"],
+                [188500,        "Fees Paid",       "#f0fdf4",                             "#16a34a",                             "₹", ""],
+                [credits,       "Credits",         confirmed?"#f0fdf4":"#fefce8",         confirmed?"#16a34a":"#d97706",         "", "/19 cr"],
+                [compDone,      "Compliance",      dm?"#1e3a5f":"#eff6ff",                "#2563eb",                             "", "/5"],
+              ].map(([val,label,cardBg,col,pfx,sfx],i)=>(
+                <div key={label} style={{background:dm?"#1e293b":cardBg,border:`1.5px solid ${col}22`,borderRadius:12,padding:"14px 16px",transition:"transform .15s,background .35s"}}
                   onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
                   onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
-                  <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:700,color:col,lineHeight:1}}>{val}</div>
-                  <div style={{fontSize:11.5,color:"#6b7280",marginTop:5,fontWeight:500}}>{label}</div>
+                  <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:700,color:col,lineHeight:1}}>
+                    {pfx==="₹"
+                      ? <span>₹<AnimatedNumber value={val} duration={1100}/></span>
+                      : <span><AnimatedNumber value={val} duration={800}/>{sfx}</span>
+                    }
+                  </div>
+                  <div style={{fontSize:11.5,color:tx2,marginTop:5,fontWeight:500}}>{label}</div>
                 </div>
               ))}
             </div>
 
             {/* Alert */}
             {docs.filter(d=>d.status==="missing").length>0&&(
-              <div style={{background:"#fffbeb",border:"1.5px solid #fcd34d",borderRadius:12,padding:"12px 16px",display:"flex",gap:12,alignItems:"flex-start",marginBottom:20,animation:"fadeUp .5s .1s ease both"}}>
+              <div style={{background:dm?"#3b1a00":"#fffbeb",border:"1.5px solid #fcd34d",borderRadius:12,padding:"12px 16px",display:"flex",gap:12,alignItems:"flex-start",marginBottom:20,animation:"fadeUp .5s .1s ease both"}}>
                 <span style={{fontSize:18,flexShrink:0,marginTop:1}}>⚠️</span>
                 <div style={{flex:1}}>
                   <div style={{fontSize:13,fontWeight:700,color:"#92400e",marginBottom:2}}>{docs.filter(d=>d.status==="missing").length} document(s) must be uploaded by Feb 20</div>
-                  <div style={{fontSize:12,color:"#78716c"}}>{docs.filter(d=>d.status==="missing").map(d=>d.name).join(" · ")} — failure to submit may delay your Student ID card.</div>
+                  <div style={{fontSize:12,color:dm?"#d97706":"#78716c"}}>{docs.filter(d=>d.status==="missing").map(d=>d.name).join(" · ")} — failure to submit may delay your Student ID card.</div>
                 </div>
                 <button onClick={()=>setActive("docs")} style={{padding:"6px 14px",borderRadius:8,border:"none",background:"#92400e",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Fix Now</button>
               </div>
@@ -1089,26 +1501,28 @@ function StudentDashboard({ onLogout }) {
                 const open=activeCard===stage.id;
                 const bc=stage.v==="green"?"#16a34a":stage.v==="amber"?"#f59e0b":stage.v==="blue"?"#3b82f6":"#9ca3af";
                 return (
-                  <div key={stage.id} style={{background:"#fff",border:`1.5px solid ${open?"#86efac":"#f3f4f6"}`,borderRadius:14,overflow:"hidden",boxShadow:open?"0 0 0 3px rgba(22,163,74,0.08)":"none",transition:"all .2s",animation:`fadeUp .5s ${.14+idx*.05}s ease both`}}>
-                    <div onClick={()=>setActive(open?null:stage.id)} style={{padding:"16px 20px",display:"flex",alignItems:"center",gap:14,cursor:"pointer"}}>
-                      <div style={{width:42,height:42,borderRadius:12,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,background:stage.v==="green"?"#f0fdf4":stage.v==="amber"?"#fffbeb":stage.v==="blue"?"#eff6ff":"#f1f5f9"}}>{stage.emoji}</div>
+                  <div key={stage.id} style={{background:surf,border:`1.5px solid ${open?"#86efac":bdr}`,borderRadius:14,overflow:"hidden",boxShadow:open?"0 0 0 3px rgba(22,163,74,0.1),0 4px 16px rgba(0,0,0,.06)":"0 1px 4px rgba(0,0,0,.04)",transition:"box-shadow .25s,border-color .25s,background .35s",animation:`fadeUp .5s ${.14+idx*.06}s both`}}>
+                    <div onClick={()=>setActive(open?null:stage.id)} style={{padding:"16px 20px",display:"flex",alignItems:"center",gap:14,cursor:"pointer",transition:"background .15s"}}
+                      onMouseEnter={e=>e.currentTarget.style.background=dm?"rgba(255,255,255,.03)":"#fafafa"}
+                      onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                      <div style={{width:42,height:42,borderRadius:12,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,background:stage.v==="green"?"#f0fdf4":stage.v==="amber"?"#fffbeb":stage.v==="blue"?"#eff6ff":"#f1f5f9",transition:"transform .2s"}}>{stage.emoji}</div>
                       <div style={{flex:1}}>
-                        <div style={{fontSize:14.5,fontWeight:700,color:"#111827",marginBottom:3}}>{stage.label}</div>
+                        <div style={{fontSize:14.5,fontWeight:700,color:tx1,marginBottom:3}}>{stage.label}</div>
                         <div style={{display:"flex",alignItems:"center",gap:8}}>
                           <div style={{width:100,height:4,background:"#f3f4f6",borderRadius:2,overflow:"hidden"}}>
-                            <div style={{height:"100%",width:`${stage.pct}%`,background:bc,borderRadius:2,transition:"width .8s ease"}}/>
+                            <div style={{height:"100%",width:`${stage.pct}%`,background:bc,borderRadius:2,transition:"width 1s cubic-bezier(.34,1.1,.64,1)",animation:"barFill 1s cubic-bezier(.34,1.1,.64,1)"}}/>
                           </div>
-                          <span style={{fontSize:11.5,color:"#9ca3af",fontWeight:600}}>{stage.pct}%</span>
-                          <span style={{fontSize:12,color:"#6b7280"}}>· {stage.sub}</span>
+                          <span style={{fontSize:11.5,color:tx3,fontWeight:600}}>{stage.pct}%</span>
+                          <span style={{fontSize:12,color:tx2}}>· {stage.sub}</span>
                         </div>
                       </div>
                       <Badge v={stage.v==="green"?"green":stage.v==="amber"?"amber":stage.v==="blue"?"blue":"neutral"}>
                         {stage.pct===100?"✓ Complete":stage.id==="docs"?"Action needed":stage.id==="courses"?"6 days left":"In progress"}
                       </Badge>
-                      <span style={{color:"#9ca3af",fontSize:18,marginLeft:4,display:"inline-block",transform:`rotate(${open?90:0}deg)`,transition:"transform .2s"}}>›</span>
+                      <span style={{color:tx3,fontSize:18,marginLeft:4,display:"inline-block",transform:`rotate(${open?90:0}deg)`,transition:"transform .28s cubic-bezier(.34,1.56,.64,1)"}}>›</span>
                     </div>
 
-                    {open&&<div style={{borderTop:"1.5px solid #f9fafb",padding:"20px 20px"}}>
+                    {open&&<div style={{borderTop:`1.5px solid ${bdr}`,padding:"20px 20px",animation:"fadeUp .28s both"}}>
                       {/* DOCS */}
                       {stage.id==="docs"&&<>
                         <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.07em",textTransform:"uppercase",color:"#9ca3af",marginBottom:10}}>Document Checklist — {verifiedCount}/9</div>
@@ -1248,7 +1662,7 @@ function StudentDashboard({ onLogout }) {
       {/* Mobile Bottom Nav */}
       {isMobile && (
         <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#fff",borderTop:"1.5px solid #f3f4f6",zIndex:400,display:"flex",height:60}}>
-          {[["dashboard","🏠","Home"],["timeline","📅","Timeline"],["notifications","🔔","Alerts"]].map(([id,icon,label])=>(
+          {[["dashboard","🏠","Home"],["timeline","📅","Timeline"],["roadmap","🗺","Roadmap"],["notifications","🔔","Alerts"]].map(([id,icon,label])=>(
             <button key={id} onClick={()=>{setPage(id);setMobileNav(false);}}
               style={{flex:1,border:"none",background:page===id?"#f0fdf4":"#fff",color:page===id?"#16a34a":"#6b7280",cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,fontSize:10,fontWeight:page===id?700:500,position:"relative",borderTop:page===id?"2px solid #16a34a":"2px solid transparent"}}>
               <span style={{fontSize:19}}>{icon}</span>{label}
@@ -1266,47 +1680,56 @@ function StudentDashboard({ onLogout }) {
 
       {/* Floating Chat */}
       <div style={{position:"fixed",bottom:isMobile?74:24,right:16,zIndex:500}}>
-        <div style={{position:"absolute",bottom:66,right:0,width:isMobile?"calc(100vw - 32px)":368,background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:22,boxShadow:"0 20px 60px rgba(0,0,0,0.12)",display:"flex",flexDirection:"column",maxHeight:isMobile?"75vh":540,overflow:"hidden",opacity:chatOpen?1:0,pointerEvents:chatOpen?"all":"none",transform:chatOpen?"translateY(0) scale(1)":"translateY(16px) scale(0.96)",transition:"all .22s cubic-bezier(.4,0,.2,1)"}}>
+        <div style={{position:"absolute",bottom:66,right:0,width:isMobile?"calc(100vw - 32px)":368,background:"#fff",border:"1.5px solid #f3f4f6",borderRadius:22,boxShadow:"0 24px 64px rgba(0,0,0,0.14)",display:"flex",flexDirection:"column",maxHeight:isMobile?"75vh":540,overflow:"hidden",opacity:chatOpen?1:0,pointerEvents:chatOpen?"all":"none",transform:chatOpen?"translateY(0) scale(1)":"translateY(20px) scale(0.94)",transition:"opacity .28s cubic-bezier(.4,0,.2,1), transform .28s cubic-bezier(.34,1.2,.64,1)"}}>
           <div style={{padding:"14px 16px",borderBottom:"1.5px solid #f9fafb",display:"flex",alignItems:"center",gap:10,flexShrink:0,background:"linear-gradient(135deg,#f0fdf4,#dcfce7)"}}>
             <div style={{width:38,height:38,background:"#111827",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,position:"relative"}}>
               🤖<div style={{position:"absolute",bottom:0,right:0,width:11,height:11,background:"#16a34a",borderRadius:"50%",border:"2.5px solid #f0fdf4"}}/>
             </div>
             <div style={{flex:1}}>
               <div style={{fontSize:14.5,fontWeight:700,color:"#111827"}}>EduBot AI</div>
-              <div style={{fontSize:11,color:"#16a34a",display:"flex",alignItems:"center",gap:5,fontWeight:500}}>
-                <span style={{width:5,height:5,background:"#16a34a",borderRadius:"50%",display:"inline-block"}}/>Powered by Claude · Always available
+              <div style={{fontSize:11,color:voiceSpeaking?"#7c3aed":"#16a34a",display:"flex",alignItems:"center",gap:5,fontWeight:500,transition:"color .3s"}}>
+                <span style={{width:5,height:5,background:voiceSpeaking?"#7c3aed":"#16a34a",borderRadius:"50%",display:"inline-block",animation:voiceSpeaking?"voicePulse 1s ease-in-out infinite":"none"}}/>
+                {voiceSpeaking ? "🔊 Speaking…" : "Powered by Claude · Always available"}
               </div>
             </div>
-            <button onClick={()=>setChatOpen(false)} style={{background:"#fff",border:"1.5px solid #e5e7eb",width:30,height:30,borderRadius:"50%",cursor:"pointer",color:"#6b7280",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>×</button>
+            <button onClick={()=>setChatOpen(false)} style={{background:"#fff",border:"1.5px solid #e5e7eb",width:30,height:30,borderRadius:"50%",cursor:"pointer",color:"#6b7280",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,transition:"background .15s,color .15s"}}
+              onMouseEnter={e=>{e.currentTarget.style.background="#f3f4f6";e.currentTarget.style.color="#111827";}}
+              onMouseLeave={e=>{e.currentTarget.style.background="#fff";e.currentTarget.style.color="#6b7280";}}>×</button>
           </div>
           <div ref={msgsRef} style={{flex:1,overflowY:"auto",padding:"14px 14px 8px",display:"flex",flexDirection:"column",gap:10}}>
             {messages.map((msg,i)=>(
-              <div key={i} style={{display:"flex",gap:8,flexDirection:msg.role==="user"?"row-reverse":"row",animation:"msgIn .2s ease"}}>
+              <div key={i} style={{display:"flex",gap:8,flexDirection:msg.role==="user"?"row-reverse":"row",animation:"msgIn .3s cubic-bezier(.34,1.2,.64,1) both"}}>
                 <div style={{width:28,height:28,borderRadius:"50%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:msg.role==="user"?11:14,fontWeight:700,marginTop:2,background:msg.role==="user"?"#16a34a":"#111827",color:"#fff"}}>{msg.role==="user"?"AR":"🤖"}</div>
                 <div style={{maxWidth:246}}>
                   <div style={{padding:"10px 13px",borderRadius:14,fontSize:13,lineHeight:1.5,borderBottomLeftRadius:msg.role==="assistant"?4:14,borderBottomRightRadius:msg.role==="user"?4:14,background:msg.role==="user"?"#111827":"#f9fafb",color:msg.role==="user"?"#fff":"#374151",border:msg.role==="assistant"?"1.5px solid #f3f4f6":"none"}}>{md(msg.content)}</div>
                 </div>
               </div>
             ))}
-            {aiLoading&&<div style={{display:"flex",gap:8}}><div style={{width:28,height:28,background:"#111827",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>🤖</div><div style={{display:"flex",alignItems:"center",gap:3,padding:"12px 14px",background:"#f9fafb",border:"1.5px solid #f3f4f6",borderRadius:14,borderBottomLeftRadius:4}}>{[0,.18,.36].map((d,i)=><div key={i} style={{width:5,height:5,background:"#9ca3af",borderRadius:"50%",animation:`bounce 1.1s ${d}s infinite`}}/>)}</div></div>}
+            {aiLoading&&<div style={{display:"flex",gap:8,animation:"msgIn .3s both"}}><div style={{width:28,height:28,background:"#111827",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>🤖</div><div style={{display:"flex",alignItems:"center",gap:4,padding:"12px 14px",background:"#f9fafb",border:"1.5px solid #f3f4f6",borderRadius:14,borderBottomLeftRadius:4}}>{[0,.16,.32].map((d,i)=><div key={i} style={{width:6,height:6,background:"#9ca3af",borderRadius:"50%",animation:`bounce 1s ${d}s ease-in-out infinite`}}/>)}</div></div>}
           </div>
           <div style={{padding:"4px 12px 6px",display:"flex",flexWrap:"wrap",gap:5,flexShrink:0}}>
-            {["Pending docs?","Best elective?","Orientation?","LMS setup"].map(q=>(
-              <button key={q} onClick={()=>quickAsk(q)} style={{fontSize:11,padding:"5px 11px",borderRadius:20,border:"1.5px solid #f3f4f6",background:"#fff",cursor:"pointer",color:"#6b7280",fontFamily:"inherit",transition:"all .15s",whiteSpace:"nowrap"}}
-                onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a";e.currentTarget.style.color="#16a34a";e.currentTarget.style.background="#f0fdf4";}}
-                onMouseLeave={e=>{e.currentTarget.style.borderColor="#f3f4f6";e.currentTarget.style.color="#6b7280";e.currentTarget.style.background="#fff";}}>{q}</button>
+            {["What's my status?","Pending docs?","Best elective?","How to activate LMS?"].map(q=>(
+              <button key={q} onClick={()=>quickAsk(q)} style={{fontSize:11,padding:"5px 11px",borderRadius:20,border:"1.5px solid #f3f4f6",background:"#fff",cursor:"pointer",color:"#6b7280",fontFamily:"inherit",transition:"all .18s cubic-bezier(.34,1.56,.64,1)",whiteSpace:"nowrap"}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a";e.currentTarget.style.color="#16a34a";e.currentTarget.style.background="#f0fdf4";e.currentTarget.style.transform="scale(1.04)";}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor="#f3f4f6";e.currentTarget.style.color="#6b7280";e.currentTarget.style.background="#fff";e.currentTarget.style.transform="scale(1)";}}>{q}</button>
             ))}
           </div>
           <div style={{padding:"8px 12px 14px",flexShrink:0}}>
-            <form onSubmit={sendChat} style={{display:"flex",gap:8,alignItems:"flex-end",border:"1.5px solid #e5e7eb",borderRadius:13,padding:"8px 10px",background:"#fff"}}>
+            <form onSubmit={sendChat} style={{display:"flex",gap:8,alignItems:"flex-end",border:"1.5px solid #e5e7eb",borderRadius:13,padding:"8px 10px",background:"#fff",transition:"border-color .18s,box-shadow .18s"}}
+              onFocusCapture={e=>{ e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.boxShadow="0 0 0 3px rgba(22,163,74,.1)"; }}
+              onBlurCapture={e=>{ e.currentTarget.style.borderColor="#e5e7eb"; e.currentTarget.style.boxShadow="none"; }}>
               <textarea value={inputVal} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendChat(e);}}} placeholder="Ask anything about your onboarding…" rows={1} style={{flex:1,border:"none",outline:"none",resize:"none",fontFamily:"inherit",fontSize:13,color:"#111827",background:"transparent",maxHeight:72,lineHeight:1.4}}/>
-              <button type="submit" disabled={aiLoading||!inputVal.trim()} style={{width:34,height:34,borderRadius:10,border:"none",flexShrink:0,background:aiLoading||!inputVal.trim()?"#f3f4f6":"#16a34a",color:aiLoading||!inputVal.trim()?"#9ca3af":"#fff",cursor:aiLoading||!inputVal.trim()?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,transition:"all .15s"}}>›</button>
+              {voiceSpeaking && (
+                <button type="button" onClick={stopSpeech} title="Stop speaking"
+                  style={{width:34,height:34,borderRadius:10,border:"none",flexShrink:0,background:"#7c3aed",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,transition:"background .2s,transform .15s cubic-bezier(.34,1.56,.64,1)",boxShadow:"0 0 0 3px rgba(124,58,237,0.2)",animation:"voicePulse 1.2s ease-in-out infinite"}}>⏹</button>
+              )}
+              <button type="submit" disabled={aiLoading||!inputVal.trim()} style={{width:34,height:34,borderRadius:10,border:"none",flexShrink:0,background:aiLoading||!inputVal.trim()?"#f3f4f6":"#16a34a",color:aiLoading||!inputVal.trim()?"#9ca3af":"#fff",cursor:aiLoading||!inputVal.trim()?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,transition:"background .2s,transform .15s cubic-bezier(.34,1.56,.64,1)"}}>›</button>
             </form>
             <div style={{textAlign:"center",fontSize:10,color:"#d1d5db",marginTop:6}}>Visored EduBot · Powered by Claude AI</div>
           </div>
         </div>
-        <button onClick={()=>setChatOpen(!chatOpen)} style={{width:54,height:54,background:chatOpen?"#374151":"#16a34a",borderRadius:"50%",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 6px 24px rgba(22,163,74,0.4)",fontSize:chatOpen?22:20,color:"#fff",transition:"all .2s"}}
-          onMouseEnter={e=>e.currentTarget.style.transform="scale(1.08)"}
+        <button onClick={()=>setChatOpen(!chatOpen)} style={{width:54,height:54,background:chatOpen?"#374151":"#16a34a",borderRadius:"50%",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:chatOpen?"0 4px 16px rgba(0,0,0,.25)":"0 6px 24px rgba(22,163,74,0.45)",fontSize:chatOpen?22:20,color:"#fff",transition:"background .22s, box-shadow .22s, transform .22s cubic-bezier(.34,1.56,.64,1)"}}
+          onMouseEnter={e=>e.currentTarget.style.transform="scale(1.1)"}
           onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
           {chatOpen?"×":"💬"}
         </button>
@@ -1320,6 +1743,13 @@ function StudentDashboard({ onLogout }) {
 // ═════════════════════════════════════════════════════════════════════════════
 export default function App() {
   const [session, setSession] = useState(null);
+  const [booting, setBooting] = useState(false);
+  const [dark, setDark] = useState(false);
+
+  const handleLogin = (role) => {
+    setBooting(true);
+    setTimeout(() => { setBooting(false); setSession(role); }, 1400);
+  };
 
   // Inject viewport meta + global resets on mount
   useEffect(() => {
@@ -1346,7 +1776,21 @@ export default function App() {
     document.head.appendChild(style);
   }, []);
 
-  if (!session) return <LoginScreen onLogin={role => setSession(role)} />;
-  if (session === "admin") return <AdminDashboard onLogout={() => setSession(null)} />;
-  return <StudentDashboard onLogout={() => setSession(null)} />;
+  if (!session && !booting) return <LoginScreen onLogin={handleLogin} />;
+  if (booting) return (
+    <div style={{fontFamily:"'Sora',system-ui,sans-serif",background:"#f9fafb",minHeight:"100vh"}}>
+      <header style={{background:"#fff",borderBottom:"1.5px solid #f3f4f6",height:58,display:"flex",alignItems:"center",padding:"0 20px",gap:10}}>
+        <div style={{width:30,height:30,background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🎓</div>
+        <span style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,letterSpacing:"-0.03em",color:"#111827"}}>Visored</span>
+        <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}}>
+          <Skeleton w="120px" h={28} r={20}/>
+          <Skeleton w="80px" h={28} r={9}/>
+        </div>
+      </header>
+      <SkeletonDashboard/>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900&family=Sora:wght@400;500;600;700&display=swap');@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+    </div>
+  );
+  if (session === "admin") return <AdminDashboard onLogout={() => setSession(null)} dark={dark} setDark={setDark}/>;
+  return <StudentDashboard onLogout={() => setSession(null)} dark={dark} setDark={setDark}/>;
 }
