@@ -387,7 +387,7 @@ function LoginScreen({ onLogin }) {
 // ═════════════════════════════════════════════════════════════════════════════
 // ADMIN DASHBOARD
 // ═════════════════════════════════════════════════════════════════════════════
-function AdminDashboard({ onLogout, dark, setDark }) {
+function AdminDashboard({ onLogout }) {
   const isMobile = useWindowWidth() < 768;
   const [page, setPage]       = useState("overview");
   const [mobileNav, setMobileNav] = useState(false);
@@ -453,12 +453,11 @@ function AdminDashboard({ onLogout, dark, setDark }) {
     setTimeout(()=>{ setSendId(null); showToast("Reminder sent successfully!"); },1200);
   };
 
-  const dm   = dark;
-  const abg  = dm ? "#0f172a" : "#f9fafb";
-  const asurf= dm ? "#1e293b" : "#fff";
-  const abdr = dm ? "#334155" : "#f3f4f6";
-  const atx1 = dm ? "#f1f5f9" : "#111827";
-  const atx2 = dm ? "#94a3b8" : "#6b7280";
+  const abg  = "#f9fafb";
+  const asurf= "#fff";
+  const abdr = "#f3f4f6";
+  const atx1 = "#111827";
+  const atx2 = "#6b7280";
 
   return (
     <div style={{fontFamily:"'Sora',system-ui,sans-serif",background:abg,minHeight:"100vh",color:atx1,width:"100%",transition:"background .35s,color .35s"}}>
@@ -498,10 +497,6 @@ function AdminDashboard({ onLogout, dark, setDark }) {
         )}
         {!isMobile && <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:12,paddingRight:24}}>
           <div style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>Dr. Admin · Registrar's Office</div>
-          <button onClick={()=>setDark(d=>!d)} title={dark?"Light mode":"Dark mode"}
-            style={{width:34,height:34,borderRadius:9,border:"1.5px solid rgba(255,255,255,0.2)",background:"transparent",color:"rgba(255,255,255,0.8)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>
-            {dark?"☀️":"🌙"}
-          </button>
           <button onClick={onLogout}
             style={{padding:"7px 16px",borderRadius:9,border:"1.5px solid rgba(255,255,255,0.2)",
               background:"transparent",color:"rgba(255,255,255,0.7)",fontSize:12,fontWeight:600,
@@ -524,11 +519,11 @@ function AdminDashboard({ onLogout, dark, setDark }) {
           {/* Stat cards — animated counters */}
           <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(5,1fr)",gap:12,marginBottom:28}}>
             {[
-              ["👥",stats.total,"Total Students",dm?"#1e3a2e":"#f0fdf4","#16a34a"],
-              ["✅",stats.complete,"Fully Onboarded",dm?"#1e3a2e":"#f0fdf4","#16a34a"],
-              ["⏳",stats.total-stats.complete-stats.pending,"In Progress",dm?"#2e2a00":"#fefce8","#d97706"],
-              ["🔴",stats.pending,"Below 50%",dm?"#3a1a1a":"#fef2f2","#dc2626"],
-              ["💳",stats.feesPending,"Fees Pending",dm?"#3a1a1a":"#fef2f2","#dc2626"],
+              ["👥",stats.total,"Total Students","#f0fdf4","#16a34a"],
+              ["✅",stats.complete,"Fully Onboarded","#f0fdf4","#16a34a"],
+              ["⏳",stats.total-stats.complete-stats.pending,"In Progress","#fefce8","#d97706"],
+              ["🔴",stats.pending,"Below 50%","#fef2f2","#dc2626"],
+              ["💳",stats.feesPending,"Fees Pending","#fef2f2","#dc2626"],
             ].map(([icon,val,label,bg,col],i)=>(
               <div key={label} className="lift" style={{background:bg,border:`1.5px solid ${col}22`,borderRadius:13,padding:"16px 18px",transition:"background .35s",animation:`springUp .5s ${i*.07}s both`}}>
                 <div style={{fontSize:22,marginBottom:6}}>{icon}</div>
@@ -936,7 +931,7 @@ function AdminDashboard({ onLogout, dark, setDark }) {
 // ═════════════════════════════════════════════════════════════════════════════
 // STUDENT DASHBOARD (preserved from previous version)
 // ═════════════════════════════════════════════════════════════════════════════
-function StudentDashboard({ onLogout, dark, setDark }) {
+function StudentDashboard({ onLogout }) {
   const isMobile = useWindowWidth() < 768;
   const [page,setPage]           = useState("dashboard");
   const [mobileNav,setMobileNav] = useState(false);
@@ -1157,14 +1152,13 @@ function StudentDashboard({ onLogout, dark, setDark }) {
     {id:"mentor", emoji:"🎯",label:"Mentoring & Compliance", sub:`${compDone}/5 modules complete`,    pct:Math.round(compDone/5*100),       v:compDone===5?"green":"blue"},
   ];
 
-  // Dark mode palette
-  const dm     = dark;
-  const bg     = dm ? "#0f172a" : "#f9fafb";
-  const surf   = dm ? "#1e293b" : "#ffffff";
-  const bdr    = dm ? "#334155" : "#f3f4f6";
-  const tx1    = dm ? "#f1f5f9" : "#111827";
-  const tx2    = dm ? "#94a3b8" : "#6b7280";
-  const tx3    = dm ? "#64748b" : "#9ca3af";
+  // Color palette
+  const bg     = "#f9fafb";
+  const surf   = "#ffffff";
+  const bdr    = "#f3f4f6";
+  const tx1    = "#111827";
+  const tx2    = "#6b7280";
+  const tx3    = "#9ca3af";
 
   return (
     <div style={{fontFamily:"'Sora',system-ui,sans-serif",background:bg,minHeight:"100vh",color:tx1,width:"100%",transition:"background .35s,color .35s"}}>
@@ -1205,11 +1199,6 @@ function StudentDashboard({ onLogout, dark, setDark }) {
               <div style={{fontSize:10.5,color:tx3}}>24ECE047</div>
             </div>
           </div>
-          {/* Dark mode toggle */}
-          <button onClick={()=>setDark(d=>!d)} title={dark?"Light mode":"Dark mode"}
-            style={{width:36,height:36,borderRadius:10,border:`1.5px solid ${bdr}`,background:surf,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,transition:"all .2s",flexShrink:0}}>
-            {dark?"☀️":"🌙"}
-          </button>
           <button onClick={onLogout}
             style={{padding:"7px 14px",borderRadius:9,border:`1.5px solid ${bdr}`,background:surf,
               color:tx2,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}}
@@ -1418,7 +1407,7 @@ function StudentDashboard({ onLogout, dark, setDark }) {
 
             <div style={{padding:"0 16px",marginBottom:22}}>
               <div style={{fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:tx3,marginBottom:10,padding:"0 2px"}}>Next Deadline</div>
-              <div style={{background:dm?"#1e293b":"#fef3c7",border:`1.5px solid rgba(217,119,6,0.25)`,borderRadius:12,padding:"14px"}}>
+              <div style={{background:"#fef3c7",border:`1.5px solid rgba(217,119,6,0.25)`,borderRadius:12,padding:"14px"}}>
                 <div style={{fontSize:12,fontWeight:600,color:"#92400e",marginBottom:8}}>{confirmed?"Document Upload":"Course Registration"}</div>
                 <Countdown targetDate={confirmed?"2026-02-20T23:59:00":"2026-02-23T23:59:00"} />
                 <div style={{fontSize:11,color:tx3,marginTop:8}}>{confirmed?"Feb 20, 2026 · 11:59 PM":"Feb 23, 2026 · 11:59 PM"}</div>
@@ -1466,9 +1455,9 @@ function StudentDashboard({ onLogout, dark, setDark }) {
                 [verifiedCount, "Docs Verified",  verifiedCount===9?"#f0fdf4":"#fefce8", verifiedCount===9?"#16a34a":"#d97706", "/9"],
                 [188500,        "Fees Paid",       "#f0fdf4",                             "#16a34a",                             "₹", ""],
                 [credits,       "Credits",         confirmed?"#f0fdf4":"#fefce8",         confirmed?"#16a34a":"#d97706",         "", "/19 cr"],
-                [compDone,      "Compliance",      dm?"#1e3a5f":"#eff6ff",                "#2563eb",                             "", "/5"],
+                [compDone,      "Compliance",      "#eff6ff",                "#2563eb",                             "", "/5"],
               ].map(([val,label,cardBg,col,pfx,sfx],i)=>(
-                <div key={label} style={{background:dm?"#1e293b":cardBg,border:`1.5px solid ${col}22`,borderRadius:12,padding:"14px 16px",transition:"transform .15s,background .35s"}}
+                <div key={label} style={{background:surf,border:`1.5px solid ${col}22`,borderRadius:12,padding:"14px 16px",transition:"transform .15s,background .35s"}}
                   onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
                   onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
                   <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:700,color:col,lineHeight:1}}>
@@ -1484,11 +1473,11 @@ function StudentDashboard({ onLogout, dark, setDark }) {
 
             {/* Alert */}
             {docs.filter(d=>d.status==="missing").length>0&&(
-              <div style={{background:dm?"#3b1a00":"#fffbeb",border:"1.5px solid #fcd34d",borderRadius:12,padding:"12px 16px",display:"flex",gap:12,alignItems:"flex-start",marginBottom:20,animation:"fadeUp .5s .1s ease both"}}>
+              <div style={{background:"#fffbeb",border:"1.5px solid #fcd34d",borderRadius:12,padding:"12px 16px",display:"flex",gap:12,alignItems:"flex-start",marginBottom:20,animation:"fadeUp .5s .1s ease both"}}>
                 <span style={{fontSize:18,flexShrink:0,marginTop:1}}>⚠️</span>
                 <div style={{flex:1}}>
                   <div style={{fontSize:13,fontWeight:700,color:"#92400e",marginBottom:2}}>{docs.filter(d=>d.status==="missing").length} document(s) must be uploaded by Feb 20</div>
-                  <div style={{fontSize:12,color:dm?"#d97706":"#78716c"}}>{docs.filter(d=>d.status==="missing").map(d=>d.name).join(" · ")} — failure to submit may delay your Student ID card.</div>
+                  <div style={{fontSize:12,color:"#78716c"}}>{docs.filter(d=>d.status==="missing").map(d=>d.name).join(" · ")} — failure to submit may delay your Student ID card.</div>
                 </div>
                 <button onClick={()=>setActive("docs")} style={{padding:"6px 14px",borderRadius:8,border:"none",background:"#92400e",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Fix Now</button>
               </div>
@@ -1503,7 +1492,7 @@ function StudentDashboard({ onLogout, dark, setDark }) {
                 return (
                   <div key={stage.id} style={{background:surf,border:`1.5px solid ${open?"#86efac":bdr}`,borderRadius:14,overflow:"hidden",boxShadow:open?"0 0 0 3px rgba(22,163,74,0.1),0 4px 16px rgba(0,0,0,.06)":"0 1px 4px rgba(0,0,0,.04)",transition:"box-shadow .25s,border-color .25s,background .35s",animation:`fadeUp .5s ${.14+idx*.06}s both`}}>
                     <div onClick={()=>setActive(open?null:stage.id)} style={{padding:"16px 20px",display:"flex",alignItems:"center",gap:14,cursor:"pointer",transition:"background .15s"}}
-                      onMouseEnter={e=>e.currentTarget.style.background=dm?"rgba(255,255,255,.03)":"#fafafa"}
+                      onMouseEnter={e=>e.currentTarget.style.background="#fafafa"}
                       onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                       <div style={{width:42,height:42,borderRadius:12,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,background:stage.v==="green"?"#f0fdf4":stage.v==="amber"?"#fffbeb":stage.v==="blue"?"#eff6ff":"#f1f5f9",transition:"transform .2s"}}>{stage.emoji}</div>
                       <div style={{flex:1}}>
@@ -1744,7 +1733,7 @@ function StudentDashboard({ onLogout, dark, setDark }) {
 export default function App() {
   const [session, setSession] = useState(null);
   const [booting, setBooting] = useState(false);
-  const [dark, setDark] = useState(false);
+
 
   const handleLogin = (role) => {
     setBooting(true);
@@ -1791,6 +1780,6 @@ export default function App() {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900&family=Sora:wght@400;500;600;700&display=swap');@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
     </div>
   );
-  if (session === "admin") return <AdminDashboard onLogout={() => setSession(null)} dark={dark} setDark={setDark}/>;
-  return <StudentDashboard onLogout={() => setSession(null)} dark={dark} setDark={setDark}/>;
+  if (session === "admin") return <AdminDashboard onLogout={() => setSession(null)}/>;
+  return <StudentDashboard onLogout={() => setSession(null)}/>;
 }
